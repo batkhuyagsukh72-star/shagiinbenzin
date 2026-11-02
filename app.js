@@ -169,7 +169,7 @@ function stats() {
 }
 let pylonOnce = false;
 function renderPylon() {
-  $('#pylonRows').innerHTML = stats().map((r, i) => `<button type="button" class="prow" data-f="${r.k}" style="--c:${fl(r.k).c};--i:${i}"><span class="ftag">${fl(r.k).l}<small>${r.lit ? fmt(r.lit) + ' л нөөц' : 'нөөц —'}</small></span><span class="led"><span class="ghost">8,888</span><span class="val" data-min="${r.min || 0}">${r.min ? fmt(r.min) : '—'}</span></span><em>${r.n} зар</em></button>`).join('');
+  $('#pylonRows').innerHTML = stats().map((r, i) => `<button type="button" class="prow" data-f="${r.k}" style="--c:${fl(r.k).c};--i:${i}"><span class="ftag">${fl(r.k).l}<small>${r.n} зар</small></span><span class="led"><span class="ghost">8,888</span><span class="val" data-min="${r.min || 0}">${r.min ? fmt(r.min) : '—'}</span></span><span class="lit${r.lit ? '' : ' none'}">${r.lit ? `<b>${fmt(r.lit)}</b><i>л</i>` : '—'}</span></button>`).join('');
   const total = S.listings.length;
   $('#pylonLive').textContent = total ? total + ' идэвхтэй зар' : 'одоогоор зар алга';
   $('#pylonTime').textContent = fmtT(new Date().toISOString()) + ' шинэчлэгдсэн';

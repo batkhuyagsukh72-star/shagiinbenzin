@@ -99,10 +99,10 @@ h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-sp
 .trust span{display:inline-flex;align-items:center;gap:8px}
 .trust svg{width:16px;height:16px;color:var(--sodium);flex:none}
 .pylon{justify-self:end;width:100%;max-width:380px;background:rgba(10,15,20,.9);border:1px solid var(--line-2);border-radius:18px;padding:18px 18px 14px}
-.pylon-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line-2);padding-bottom:10px;margin-bottom:6px}
+.pylon-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line-2);padding-bottom:10px;margin-bottom:8px}
 .pylon-head b{font-family:var(--display);text-transform:uppercase;letter-spacing:.12em;font-size:13px;font-weight:600}
 .pylon-head span{font-family:var(--mono);font-size:11px;color:var(--fog)}
-.prow{display:grid;grid-template-columns:112px 1fr auto;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(36,52,66,.7);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;transition:background .15s}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) auto 92px;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(36,52,66,.7);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;transition:background .15s}
 .prow:hover{background:rgba(255,176,46,.05)}
 .boot .prow{animation:ledon .6s steps(3,end) both;animation-delay:calc(1s + var(--i,0) * 130ms)}
 @keyframes ledon{0%{opacity:0}40%{opacity:.6}60%{opacity:.25}100%{opacity:1}}
@@ -112,7 +112,11 @@ h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-sp
 .led{position:relative;justify-self:end;font-family:var(--mono);font-weight:700;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
 .led .ghost{color:rgba(255,176,46,.07)}
 .led .val{position:absolute;inset:0;text-align:right;color:var(--sodium);text-shadow:0 0 14px rgba(255,176,46,.55),0 0 2px rgba(255,200,120,.8)}
-.prow em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--fog);width:30px}
+.pcols{display:grid;grid-template-columns:minmax(0,1fr) auto 92px;gap:10px;font-family:var(--mono);font-size:10.5px;color:var(--fog);padding:2px 0 2px}
+.pcols span{text-align:right}
+.lit{justify-self:end;text-align:right;font-family:var(--mono);font-weight:700;font-size:19px;line-height:1;color:#FFD08A;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lit i{font-style:normal;font-size:11px;font-weight:500;color:var(--fog);margin-left:4px}
+.lit.none{color:var(--fog-2);font-size:16px}
 .pylon-foot{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;color:var(--fog);margin-top:8px;padding-top:10px;border-top:1px dashed var(--line-2)}
 .live{display:inline-flex;align-items:center;gap:6px;color:#BFF3DB}
 .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);animation:blink 2s infinite}
@@ -413,7 +417,8 @@ footer.app .sign{display:none}
           </div>
         </div>
         <aside class="pylon fx" style="--i:2" aria-label="Өнөөдрийн доод үнэ">
-          <div class="pylon-head"><b>Өнөөдрийн доод үнэ</b><span>₮ / литр</span></div>
+          <div class="pylon-head"><b>Өнөөдрийн үнэ, нөөц</b></div>
+          <div class="pcols" aria-hidden="true"><span></span><span>Доод үнэ, ₮/л</span><span>Нийт нөөц</span></div>
           <div id="pylonRows" class="boot"></div>
           <div class="pylon-foot"><span class="live" id="pylonLive">ачаалж байна</span><span id="pylonTime"></span></div>
         </aside>
@@ -515,6 +520,6 @@ d.classList.add('js-rv');var io=new IntersectionObserver(function(es){es.forEach
 document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});setTimeout(function(){document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in')})},6000);
 setTimeout(function(){var b=document.getElementById('pylonRows');if(b)b.classList.remove('boot')},3500)})();
 </script>
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>
