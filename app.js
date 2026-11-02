@@ -12,6 +12,8 @@ const DISTRICTS = ['Баянгол', 'Баянзүрх', 'Сонгинохайр
 const ST = { pending: 'Төлбөр хүлээгдэж буй', new: 'Шинэ', accepted: 'Хүлээн авсан', enroute: 'Замд', delivered: 'Хүргэгдсэн', confirmed: 'Баталгаажсан', expired: 'Хугацаа дууссан', dispute: 'Гомдолтой', refunded: 'Буцаалт хийсэн' };
 const FLOW = ['new', 'accepted', 'enroute', 'delivered', 'confirmed'];
 const UB = [47.9185, 106.9176];
+const PAY = { cash: 'Бэлнээр (хүргэлтийн үед)', transfer: 'Дансаар шилжүүлсэн', qpay_out: 'QPay-р (сайтаас гадуур)', later: 'Дараа тооцоо хийнэ' };
+const PAY_S = { cash: 'бэлэн', transfer: 'данс', qpay_out: 'QPay гадуур', later: 'дараа тооцоо' };
 const DEFAULT_IMG = 'a/tanker-dawn.jpg';
 
 /* ================= Туслах ================= */
@@ -167,7 +169,7 @@ function stats() {
 }
 let pylonOnce = false;
 function renderPylon() {
-  $('#pylonRows').innerHTML = stats().map((r) => `<button type="button" class="prow" data-f="${r.k}" style="--c:${fl(r.k).c}"><span class="ftag">${fl(r.k).l}</span><span class="led"><span class="ghost">8,888</span><span class="val" data-min="${r.min || 0}">${r.min ? fmt(r.min) : '—'}</span></span><em>${r.n} зар</em></button>`).join('');
+  $('#pylonRows').innerHTML = stats().map((r, i) => `<button type="button" class="prow" data-f="${r.k}" style="--c:${fl(r.k).c};--i:${i}"><span class="ftag">${fl(r.k).l}</span><span class="led"><span class="ghost">8,888</span><span class="val" data-min="${r.min || 0}">${r.min ? fmt(r.min) : '—'}</span></span><em>${r.n} зар</em></button>`).join('');
   const total = S.listings.length;
   $('#pylonLive').textContent = total ? total + ' идэвхтэй зар' : 'одоогоор зар алга';
   $('#pylonTime').textContent = fmtT(new Date().toISOString()) + ' шинэчлэгдсэн';
@@ -180,8 +182,12 @@ function renderFuels() {
   if (S.profile && S.profile.role === 'supplier' && !$('#supNote')) $('#fuels').insertAdjacentHTML('afterend', '<p class="note" id="supNote">Нийлүүлэгчийн эрхээр нэвтэрсэн тул зөвхөн өөрийн зар харагдана.</p>');
 }
 function selectFuel(f) {
-  S.fuel = f; S.sel = null; $('#boardWrap').hidden = false; renderFuels(); initMap(); renderBoard();
+  S.fuel = f; S.sel = null; $('#boardWrap').hidden = false; renderFuels(); initMap();
+  const mp = $('#map'), ls = $('#list');
+  if (!RM) { mp.classList.add('pop'); ls.classList.add('pop'); clearTimeout(S.popT); S.popT = setTimeout(() => { mp.classList.remove('pop'); ls.classList.remove('pop'); }, 1400); }
+  renderBoard();
   setTimeout(() => { S.map.invalidateSize(); fitMarkers(); }, 60);
+  if (innerWidth < 860) setTimeout(() => $('#boardWrap').scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' }), 120);
 }
 function initMap() {
   if (S.map) return;
@@ -218,8 +224,8 @@ function renderBoard() {
   const v = visible();
   if (S.layer) {
     S.layer.clearLayers();
-    v.filter((l) => l.lat != null).forEach((l) => {
-      const mk = L.marker([l.lat, l.lng], { icon: L.divIcon({ className: '', html: `<div class="mk${S.sel === l.id ? ' on' : ''}" style="--c:${fl(l.fuel).c}"><b>${fmt(l.price)}₮</b><i></i></div>`, iconSize: [0, 0] }), zIndexOffset: S.sel === l.id ? 900 : 0 });
+    v.filter((l) => l.lat != null).forEach((l, i) => {
+      const mk = L.marker([l.lat, l.lng], { icon: L.divIcon({ className: '', html: `<div class="mk${S.sel === l.id ? ' on' : ''}" style="--c:${fl(l.fuel).c};--i:${Math.min(i, 10)}"><b>${fmt(l.price)}₮</b><i></i></div>`, iconSize: [0, 0] }), zIndexOffset: S.sel === l.id ? 900 : 0 });
       mk.on('click', () => { S.sel = l.id; renderBoard(); const c = $(`.card[data-id="${l.id}"]`); if (c) c.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'nearest' }); });
       S.layer.addLayer(mk);
     });
@@ -228,14 +234,14 @@ function renderBoard() {
   $('#list').innerHTML = v.map((l, i) => {
     const k = km(S.you, l), eta = etaMin(k), pct = Math.round((l.avail_l / Math.max(1, l.total_l)) * 100);
     const base = [l.base_district && l.base_district + ' дүүрэг', l.base_khoroo, l.base_org].filter(Boolean).join(', ') || '—';
-    return `<article class="card${S.sel === l.id ? ' on' : ''}" data-id="${l.id}" style="--c:${fl(l.fuel).c}">
+    return `<article class="card${S.sel === l.id ? ' on' : ''}" data-id="${l.id}" style="--c:${fl(l.fuel).c};--i:${Math.min(i, 8)}">
       <div class="ph">${l.photo_url ? `<img src="${esc(l.photo_url)}" alt="${esc(l.supplier_name)}-ийн тээврийн хэрэгсэл" loading="${i < 3 ? 'eager' : 'lazy'}">` : ''}<span class="chip">${fl(l.fuel).l}</span></div>
       <div class="bd">
         <div class="r1"><h3>${esc(l.supplier_name)}</h3>${k != null ? `<span class="dist">${k.toFixed(1)} км<br><span class="muted">~${eta} мин</span></span>` : '<span class="dist muted">зай —</span>'}</div>
         <div class="price"><span class="n">${fmt(l.price)}</span><span class="u">₮ / литр</span></div>
         <div class="stock"><div class="bar"><i style="width:${pct}%"></i></div><span><b>${fmt(l.avail_l)}</b> / ${fmt(l.total_l)} л байгаа</span></div>
         <dl class="meta"><dt>Байнгын хаяг</dt><dd>${esc(base)}</dd><dt>Одоо</dt><dd>${esc(l.place || 'байршил')} · <span class="muted">${ago(l.loc_at)}</span></dd><dt>Нийтэлсэн</dt><dd class="mono">${fmtDT(l.created_at)}</dd><dt>Хүргэлт</dt><dd>Хүргэлттэй · үнэгүй</dd></dl>
-        <div class="r3"><span class="lock">${lockSvg}Утас төлбөрийн дараа нээгдэнэ</span><span style="display:flex;gap:8px">${l.lat != null ? `<button class="btn btn-ghost btn-sm" type="button" data-show="${l.id}">Зураг дээр</button>` : ''}<button class="btn btn-primary btn-sm" type="button" data-order="${l.id}">Захиалах</button></span></div>
+        <div class="r3"><span class="lock">${lockSvg}Утасны дугаар төлбөрийн дараа нээгдэнэ</span><span style="display:flex;gap:8px">${l.lat != null ? `<button class="btn btn-ghost btn-sm" type="button" data-show="${l.id}">Зураг дээр</button>` : ''}<button class="btn btn-primary btn-sm" type="button" data-order="${l.id}">Захиалах</button></span></div>
       </div></article>`;
   }).join('');
 }
@@ -364,7 +370,7 @@ async function trackView(id) {
     ${paid && sup ? `<div class="contact"><div><small>Нийлүүлэгч · ${esc(sup.name)}</small><a class="mono" href="tel:${esc(sup.phone || '')}" style="text-decoration:none">${phoneFmt(sup.phone) || '—'}</a></div><button class="btn btn-ok btn-sm" type="button" id="cpy">Хуулах</button></div>
       <div class="minimap" id="tm"></div>
       <p class="muted small" style="margin:-4px 0 0">${k != null ? `Нийлүүлэгч таны цэгээс <b class="mono">${k.toFixed(1)} км</b>, ойролцоогоор <b class="mono">${etaMin(k)} минутын</b> дараа очно. ` : ''}Нийлүүлэгчийн байршил: ${esc(sup.place || '')} · ${ago(sup.loc_at)}</p>`
-      : o.status === 'pending' ? '<div class="note warn">Төлбөр хүлээгдэж байна. Төлбөр орсны дараа нийлүүлэгчийн утас, байршил нээгдэнэ.</div>' : ''}
+      : o.status === 'pending' ? '<div class="note warn">Төлбөр хүлээгдэж байна. Төлбөр орсны дараа нийлүүлэгчийн утасны дугаар, байршил нээгдэнэ.</div>' : ''}
     ${o.status === 'dispute' ? '<div class="note warn">Таны гомдлыг админ хүлээн авсан. Удахгүй холбогдоно.</div>' : ''}
     ${o.status === 'expired' ? '<div class="note">Төлбөр хугацаандаа ороогүй тул захиалга хүчингүй болсон.</div>' : ''}
     ${paid ? `<ol class="track">${FLOW.map((s, i) => { const d = o.status === 'confirmed' || i < idx; return `<li class="${d ? 'done' : i === idx ? 'now' : ''}"><span class="dot">${d ? '✓' : i + 1}</span><div><b>${ST[s]}</b></div><time></time></li>`; }).join('')}</ol>` : ''}
@@ -471,22 +477,24 @@ function drawSupplier(freshIds) {
     ['Шинэ захиалга', SUP.orders.filter((o) => o.status === 'new').length, 'хүлээн авах', 'hot'],
     ['Явцад', SUP.orders.filter((o) => ['accepted', 'enroute', 'delivered'].includes(o.status)).length, 'хүлээн авсан → хүргэгдсэн', ''],
     ['Өнөөдөр зарсан', fmt(td.reduce((a, o) => a + o.liters, 0)) + ' л', td.length + ' захиалга', ''],
-    ['Өнөөдрийн борлуулалт', money(td.reduce((a, o) => a + o.total, 0)), 'QPay-р төлөгдсөн', ''],
+    ['Өнөөдрийн борлуулалт', money(td.reduce((a, o) => a + o.total, 0)), 'төлөгдсөн захиалга', ''],
     ['Идэвхтэй зар', SUP.listings.filter((l) => l.status === 'active').length, 'хязгаар ' + (S.profile.max_listings ?? '—'), ''],
   ].map((k) => `<div class="kpi ${k[3]}"><span>${k[0]}</span><b>${k[1]}</b><small>${k[2]}</small></div>`).join('');
   const NEXT = { new: ['accepted', 'Хүлээн авах'], accepted: ['enroute', 'Замд гарлаа'], enroute: ['delivered', 'Хүргэгдсэн'] };
   $('#supO').innerHTML = SUP.orders.length ? SUP.orders.map((o) => {
     const n = NEXT[o.status];
-    const dir = `https://www.google.com/maps/dir/?api=1&destination=${o.lat},${o.lng}`;
+    const addrTxt = [o.district, o.khoroo, o.org_name, o.address].filter(Boolean).join(', ');
+    const dir = o.lat != null ? `https://www.google.com/maps/dir/?api=1&destination=${o.lat},${o.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addrTxt + ', Улаанбаатар')}`;
+    const man = o.manual ? `<div class="note${o.pay_method === 'cash' ? ' warn' : ''}">Утсаар ирсэн захиалга (админ бүртгэсэн) · ${o.pay_method === 'cash' ? `<b>Бэлнээр ${money(o.total)} авна</b>` : o.pay_method === 'later' ? 'Төлбөрийг админ дараа тооцно' : esc(PAY[o.pay_method] || '') + ' төлөгдсөн'}</div>` : '';
     return `<div class="order${freshIds && freshIds.has(o.id) ? ' fresh' : ''}"><div class="o1"><b>#${o.order_no}</b><span class="pill p-${o.status}">${ST[o.status] || o.status}</span></div>
       <div class="o2"><span><strong>${fl(o.fuel).l} · ${o.liters} л</strong></span><span class="mono">${money(o.total)}</span><span class="mono">${fmtDT(o.paid_at)}</span>${o.scheduled_at ? `<span>Товлосон: <strong class="mono">${fmtDT(o.scheduled_at)}</strong></span>` : '<span>Аль болох хурдан</span>'}</div>
-      <div class="o2"><span>Захиалагч: <a class="mono" href="tel:${esc(o.customer_phone)}"><strong>${phoneFmt(o.customer_phone)}</strong></a></span>${o.car_plate ? `<span>Машин: <strong>${esc(o.car_plate)}</strong></span>` : ''}</div>
-      <div class="o2"><span>${esc([o.district, o.khoroo, o.org_name, o.address].filter(Boolean).join(', '))}${o.note ? ' · ' + esc(o.note) : ''}</span></div>
+      ${man}<div class="o2"><span>Захиалагч${o.manual_name ? ' ' + esc(o.manual_name) : ''}: <a class="mono" href="tel:${esc(o.customer_phone)}"><strong>${phoneFmt(o.customer_phone)}</strong></a></span>${o.car_plate ? `<span>Машин: <strong>${esc(o.car_plate)}</strong></span>` : ''}</div>
+      <div class="o2"><span>${esc(addrTxt)}${o.note ? ' · ' + esc(o.note) : ''}</span></div>
       ${o.late_paid ? '<div class="note warn">Хугацаа дууссаны дараа төлөгдсөн, үлдэгдлээ шалгана уу.</div>' : ''}
       <div class="o3">${n ? `<button class="btn btn-primary btn-sm" type="button" data-st="${n[0]}" data-id="${o.id}">${n[1]}</button>` : o.status === 'delivered' ? '<span class="muted small">Захиалагч баталгаажуулахыг хүлээж байна</span>' : ''}
-        ${['new', 'accepted', 'enroute'].includes(o.status) ? `<a class="btn btn-ghost btn-sm" href="${dir}" target="_blank" rel="noopener">Чиглэл (Google Maps)</a>` : ''}</div></div>`;
+        ${['new', 'accepted', 'enroute'].includes(o.status) ? `<a class="btn btn-ghost btn-sm" href="${dir}" target="_blank" rel="noopener">${o.lat != null ? 'Чиглэл (Google Maps)' : 'Хаягаар хайх (Google Maps)'}</a>` : ''}</div></div>`;
   }).join('') : '<div class="empty" style="border:0">Төлөгдсөн захиалга одоогоор алга. Шинэ захиалга ирэхэд энд гарч дуут дохио өгнө.</div>';
-  $$('#supO [data-st]').forEach((b) => (b.onclick = async () => { busy(b, true); try { await rpc('supplier_set_status', { p_order: b.dataset.id, p_status: b.dataset.st }); toast(ST[b.dataset.st]); await loadSupplier(); } catch (err) { toast(nice(err), true); busy(b, false); } }));
+  $$('#supO [data-st]').forEach((b) => (b.onclick = async () => { busy(b, true); try { const r = await rpc('supplier_set_status', { p_order: b.dataset.id, p_status: b.dataset.st }); toast(ST[r] || ST[b.dataset.st]); await loadSupplier(); } catch (err) { toast(nice(err), true); busy(b, false); } }));
   const act = SUP.listings.filter((l) => l.status !== 'finished').length;
   $('#supLc').textContent = `${act} / ${S.profile.max_listings ?? '—'} зар`;
   $('#supL').innerHTML = SUP.listings.length ? SUP.listings.map((l) => `<div class="my"><div class="my1"><span class="chip" style="--c:${fl(l.fuel).c}">${fl(l.fuel).l}</span><b class="mono">${money(l.price)}</b><span class="mono muted small">${fmt(l.avail_l)} / ${fmt(l.total_l)} л</span><span class="pill p-${l.status}">${{ active: 'Идэвхтэй', paused: 'Түр зогссон', finished: 'Дууссан' }[l.status]}</span></div>
@@ -588,62 +596,80 @@ function drawChart(days) {
     s += `<rect x="${cx - bw / 2}" y="${y(v)}" width="${bw}" height="${Math.max(0, pt + ih - y(v))}" rx="4" fill="${last ? '#FFB02E' : '#2C4052'}"><title>${d.d}: ${money(d.rev)} · ${d.n} захиалга</title></rect>`;
     if (i % every === 0 || last) s += `<text x="${cx}" y="${H - 9}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="${last ? '#FFD08A' : '#6B7B88'}">${d.d}</text>`;
     if (last) s += `<text x="${cx}" y="${y(v) - 6}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" fill="#FFD08A">${v.toFixed(2)}</text>`; });
-  $('#admChart').innerHTML = s + '</svg><p class="muted small" style="margin:6px 0 0">сая ₮ · QPay-р төлөгдсөн захиалга (буцаалт хассан)</p>';
+  $('#admChart').innerHTML = s + '</svg><p class="muted small" style="margin:6px 0 0">сая ₮ · төлөгдсөн захиалга, гараар нэмсэн хүргэлт орно (буцаалт хассан)</p>';
 }
 async function loadFeed() { const { data } = await sb.from('audit_log').select('*').order('at', { ascending: false }).limit(80); $('#feed').innerHTML = (data || []).map(feedLi).join('') || '<li><span class="muted">Бүртгэл алга</span></li>'; }
 const feedLi = (f) => `<li><time>${fmtDT(f.at)}</time><div><b>${esc(f.actor || 'Систем')}</b> <span>${esc(f.action)}${f.entity === 'order' && f.entity_id ? ' · #' + esc(f.entity_id) : ''}</span></div></li>`;
 function prependFeed(f) { const u = $('#feed'); if (u) u.insertAdjacentHTML('afterbegin', feedLi(f)); }
-const TABS = [['orders', 'Захиалга'], ['listings', 'Зарууд'], ['suppliers', 'Нийлүүлэгчид'], ['customers', 'Хэрэглэгчид'], ['admins', 'Админууд'], ['feedback', 'Санал, гомдол'], ['settings', 'Тохиргоо']];
+const TABS = [['orders', 'Захиалга'], ['listings', 'Зарууд'], ['suppliers', 'Нийлүүлэгчид'], ['customers', 'Хэрэглэгчид'], ['feedback', 'Санал, гомдол'], ['settings', 'Тохиргоо']];
 function tbl(h, rows) { return `<div class="tbl-wrap"><table class="tbl"><thead><tr>${h.map((x) => `<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.join('') || `<tr><td colspan="${h.length}" class="muted">Мэдээлэл алга</td></tr>`}</tbody></table></div>`; }
 async function drawTabs() {
   const d = ADM.dash || {};
   $('#admTabs').innerHTML = TABS.map(([k, v]) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${ADM.tab === k}">${v}${k === 'orders' && d.new_orders ? `<span>${d.new_orders}</span>` : ''}${k === 'feedback' && d.open_feedback ? `<span>${d.open_feedback}</span>` : ''}</button>`).join('');
   $$('#admTabs [data-tab]').forEach((b) => (b.onclick = () => { ADM.tab = b.dataset.tab; drawTabs(); }));
   const B = $('#admBody'); B.innerHTML = '<div class="box-b"><span class="spin"></span></div>';
-  const owner = S.profile.admin_level === 'owner';
   try {
     if (ADM.tab === 'orders') {
       const list = await rpc('admin_orders', { p_status: ADM.status || null, p_limit: 300 });
-      B.innerHTML = `<div class="box-b" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><select class="isel" id="ofS" aria-label="Төлвөөр шүүх"><option value="">Бүх төлөв</option>${Object.entries(ST).map(([k, v]) => `<option value="${k}"${ADM.status === k ? ' selected' : ''}>${v}</option>`).join('')}</select><button class="btn btn-ghost btn-sm" type="button" id="csv">Excel (CSV) татах</button></div>` +
-        tbl(['№', 'Огноо', 'Захиалагч', 'Нийлүүлэгч', 'Төрөл, литр', 'Дүн', 'Хаяг', 'Төлөв', ''], list.map((o) => `<tr><td class="n">#${o.order_no}</td><td class="n">${fmtDT(o.created_at)}${o.scheduled_at ? `<div class="muted small">товлосон ${fmtDT(o.scheduled_at)}</div>` : ''}</td><td>${esc(o.customer_name)}<div class="mono small muted">${phoneFmt(o.customer_phone)}</div></td><td>${esc(o.supplier_name)}</td><td>${fl(o.fuel).l} · ${o.liters} л</td><td class="n">${money(o.total)}${o.qpay_payment_id === 'ADMIN-TEST' ? '<div class="small" style="color:#FFB3A8">туршилт</div>' : ''}</td><td class="small" style="min-width:180px">${esc([o.district, o.khoroo, o.org_name, o.address].filter(Boolean).join(', '))}${o.car_plate ? ' · ' + esc(o.car_plate) : ''}</td>
+      B.innerHTML = `<div class="box-b" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><button class="btn btn-primary btn-sm" type="button" id="manBtn">+ Гараар хүргэлт нэмэх</button><select class="isel" id="ofS" aria-label="Төлвөөр шүүх"><option value="">Бүх төлөв</option>${Object.entries(ST).map(([k, v]) => `<option value="${k}"${ADM.status === k ? ' selected' : ''}>${v}</option>`).join('')}</select><button class="btn btn-ghost btn-sm" type="button" id="csv">Excel (CSV) татах</button></div>` +
+        tbl(['№', 'Огноо', 'Захиалагч', 'Нийлүүлэгч', 'Төрөл, литр', 'Дүн', 'Хаяг', 'Төлөв', ''], list.map((o) => `<tr><td class="n">#${o.order_no}</td><td class="n">${fmtDT(o.created_at)}${o.scheduled_at ? `<div class="muted small">товлосон ${fmtDT(o.scheduled_at)}</div>` : ''}</td><td>${esc(o.customer_name)}<div class="mono small muted">${phoneFmt(o.customer_phone)}</div></td><td>${esc(o.supplier_name)}</td><td>${fl(o.fuel).l} · ${o.liters} л</td><td class="n">${money(o.total)}${o.qpay_payment_id === 'ADMIN-TEST' ? '<div class="small" style="color:#FFB3A8">туршилт</div>' : ''}${o.manual ? `<div class="tag-man">гараар · ${esc(PAY_S[o.pay_method] || '')}</div>` : ''}</td><td class="small" style="min-width:180px">${esc([o.district, o.khoroo, o.org_name, o.address].filter(Boolean).join(', '))}${o.car_plate ? ' · ' + esc(o.car_plate) : ''}</td>
           <td>${o.paid_at ? `<select class="isel" data-os="${o.id}" aria-label="Төлөв">${['new', 'accepted', 'enroute', 'delivered', 'confirmed', 'dispute', 'refunded'].map((k) => `<option value="${k}"${o.status === k ? ' selected' : ''}>${ST[k]}</option>`).join('')}</select>` : `<span class="pill p-${o.status}">${ST[o.status]}</span>`}</td>
           <td class="act">${o.status === 'pending' ? `<button class="btn btn-ghost btn-sm" type="button" data-sim="${o.id}" title="QPay-гүйгээр төлсөнд тооцох (туршилт)">Туршилтын төлбөр</button>` : ''}</td></tr>`));
       $('#ofS').onchange = (e) => { ADM.status = e.target.value; drawTabs(); };
       $('#csv').onclick = () => csv(list);
+      $('#manBtn').onclick = () => manualOrder();
       $$('#admBody [data-os]').forEach((s) => (s.onchange = async () => { try { await rpc('admin_set_order_status', { p_order: s.dataset.os, p_status: s.value }); toast('Төлөв шинэчлэгдлээ'); loadDash(); } catch (err) { toast(nice(err), true); drawTabs(); } }));
       $$('#admBody [data-sim]').forEach((b) => (b.onclick = async () => { busy(b, true); try { await fn('qpay', { action: 'simulate', order_id: b.dataset.sim }); toast('Туршилтын төлбөр бүртгэгдлээ'); drawTabs(); loadDash(); } catch (err) { toast(nice(err), true); busy(b, false); } }));
     }
     if (ADM.tab === 'listings') {
-      const list = await rpc('admin_listings');
-      B.innerHTML = tbl(['Нийлүүлэгч', 'Төрөл', 'Үнэ', 'Үлдэгдэл', 'Одоо', 'Нийтэлсэн', 'Төлөв'], list.map((l) => `<tr><td>${esc(l.supplier_name)}</td><td><span class="chip" style="--c:${fl(l.fuel).c}">${fl(l.fuel).l}</span></td><td class="n">${money(l.price)}</td><td class="n">${fmt(l.avail_l)} / ${fmt(l.total_l)} л</td><td class="small">${esc(l.place || '—')}<div class="muted">${ago(l.loc_at)}</div></td><td class="n">${fmtDT(l.created_at)}</td>
+      const [list, sups] = await Promise.all([rpc('admin_listings'), rpc('admin_users', { p_role: 'supplier' })]);
+      const act = (sups || []).filter((u) => !u.blocked);
+      const lform = act.length ? `<form class="box-b grid2" id="alf" novalidate style="border-bottom:1px solid var(--line)"><b class="full">Нийлүүлэгчийн өмнөөс зар нэмэх</b>
+        <label class="inp full">Нийлүүлэгч<select id="aSup">${act.map((u) => `<option value="${u.id}">${esc(u.display_name || u.username || '—')}</option>`).join('')}</select></label>
+        <label class="inp">Шатахууны төрөл<select id="aFuel">${Object.keys(FUELS).map((k) => `<option value="${k}">${fl(k).l}</option>`).join('')}</select></label>
+        <label class="inp">1 литрийн үнэ (₮)<input id="aPrice" type="number" inputmode="numeric" min="500" max="20000" placeholder="2690"></label>
+        <label class="inp">Нийт байгаа хэмжээ (л)<input id="aTotal" type="number" inputmode="numeric" min="1" placeholder="3000"></label>
+        <label class="inp">Төлөв<select id="aSt"><option value="active">Идэвхтэй</option><option value="paused">Түр зогссон</option></select></label>
+        <label class="inp">Байнгын дүүрэг<select id="aDist">${DISTRICTS.map((d) => `<option>${d}</option>`).join('')}</select></label>
+        <label class="inp">Хороо<input id="aKh" maxlength="40" placeholder="жишээ нь 3-р хороо"></label>
+        <label class="inp">Байгууллагын нэр<input id="aOrg" maxlength="120"></label>
+        <label class="inp">Яг одоо явж буй газар<input id="aPlace" maxlength="200"></label>
+        <p class="muted small full" style="margin:0">Газрын зураг дээрх байршил нийлүүлэгч самбараа нээж, байршлаа шинэчлэхэд гарна.</p>
+        <div class="full"><button class="btn btn-primary" type="submit" id="aGo">Зар нэмэх</button></div></form>` : '<div class="box-b note">Зар нэмэхийн тулд эхлээд “Нийлүүлэгчид” хэсэгт нийлүүлэгч нэмнэ үү.</div>';
+      B.innerHTML = lform + tbl(['Нийлүүлэгч', 'Төрөл', 'Үнэ', 'Үлдэгдэл', 'Одоо', 'Нийтэлсэн', 'Төлөв'], list.map((l) => `<tr><td>${esc(l.supplier_name)}</td><td><span class="chip" style="--c:${fl(l.fuel).c}">${fl(l.fuel).l}</span></td><td class="n">${money(l.price)}</td><td class="n">${fmt(l.avail_l)} / ${fmt(l.total_l)} л</td><td class="small">${esc(l.place || '—')}<div class="muted">${ago(l.loc_at)}</div></td><td class="n">${fmtDT(l.created_at)}</td>
         <td><select class="isel" data-ls="${l.id}" aria-label="Зарын төлөв"><option value="active"${l.status === 'active' ? ' selected' : ''}>Идэвхтэй</option><option value="paused"${l.status === 'paused' ? ' selected' : ''}>Түр зогссон</option><option value="finished"${l.status === 'finished' ? ' selected' : ''}>Дууссан</option></select></td></tr>`));
       $$('#admBody [data-ls]').forEach((s) => (s.onchange = async () => { try { await rpc('admin_set_listing_status', { p_id: +s.dataset.ls, p_status: s.value }); toast('Шинэчлэгдлээ'); loadListings(); } catch (err) { toast(nice(err), true); } }));
+      const alf = $('#alf'); if (alf) alf.onsubmit = async (e) => {
+        e.preventDefault(); const b = $('#aGo'), price = +$('#aPrice').value, total = +$('#aTotal').value;
+        if (!(price >= 500 && price <= 20000)) { $('#aPrice').focus(); return toast('1 литрийн үнэ 500 – 20,000₮', true); }
+        if (!(total >= 1)) { $('#aTotal').focus(); return toast('Нийт хэмжээгээ оруулна уу', true); }
+        busy(b, true);
+        try { await rpc('admin_save_listing', { p_supplier: $('#aSup').value, p_fuel: $('#aFuel').value, p_price: price, p_total: total, p_district: $('#aDist').value, p_khoroo: $('#aKh').value.trim(), p_org: $('#aOrg').value.trim(), p_place: $('#aPlace').value.trim(), p_status: $('#aSt').value }); toast('Зар нэмэгдлээ'); drawTabs(); loadDash(); loadListings(); }
+        catch (err) { toast(nice(err), true); busy(b, false); }
+      };
     }
-    if (ADM.tab === 'suppliers' || ADM.tab === 'customers' || ADM.tab === 'admins') {
-      const role = { suppliers: 'supplier', customers: 'customer', admins: 'admin' }[ADM.tab];
+    if (ADM.tab === 'suppliers' || ADM.tab === 'customers') {
+      const role = ADM.tab === 'suppliers' ? 'supplier' : 'customer';
       const list = await rpc('admin_users', { p_role: role });
-      const canCreate = role === 'supplier' || (role === 'admin' && owner) || role === 'customer';
-      const form = canCreate ? `<form class="box-b grid2" id="uf" novalidate style="border-bottom:1px solid var(--line)"><b class="full">${role === 'supplier' ? 'Шинэ нийлүүлэгч нэмэх' : role === 'admin' ? 'Шинэ админ нэмэх' : 'Хэрэглэгч нэмэх'}</b>
+      const form = `<form class="box-b grid2" id="uf" novalidate style="border-bottom:1px solid var(--line)"><b class="full">${role === 'supplier' ? 'Шинэ нийлүүлэгч нэмэх' : 'Хэрэглэгч нэмэх'}</b>
         <label class="inp">${role === 'supplier' ? 'Нийлүүлэгчийн нэр (харагдах)' : 'Нэр'}<input id="uName" maxlength="60"></label>
-        <label class="inp">Утас<input id="uPhone" type="tel" inputmode="numeric" maxlength="8"></label>
+        <label class="inp">Утасны дугаар<input id="uPhone" type="tel" inputmode="numeric" maxlength="8"></label>
         <label class="inp">Нэвтрэх нэр<input id="uUser" maxlength="24" autocapitalize="none"></label>
         <label class="inp">Анхны ПИН код (6 оронтой)<input id="uPin" inputmode="numeric" maxlength="6"></label>
         ${role === 'supplier' ? '<label class="inp">Зарын дээд тоо<input id="uMax" type="number" min="0" max="100" value="5"></label>' : ''}
-        ${role === 'admin' ? '<label class="inp">Түвшин<select id="uLvl"><option value="manager">Менежер</option><option value="owner">Эзэмшигч</option></select></label>' : ''}
-        <div class="full"><button class="btn btn-primary" type="submit" id="uGo">Нэмэх</button> <span class="muted small">Нэвтрэх нэр, ПИН кодыг тухайн хүнд өөрөө дамжуулна уу.</span></div></form>` : '';
-      B.innerHTML = form + tbl(role === 'supplier' ? ['Нийлүүлэгч', 'Утас', 'Идэвхтэй зар', 'Зарын хязгаар', 'Нийт борлуулалт', 'Төлөв', ''] : role === 'admin' ? ['Нэр', 'Түвшин', 'Утас', 'Имэйл / нэр', 'Төлөв', ''] : ['Нэр', 'Утас', 'Имэйл / нэр', 'Төлсөн захиалга', 'Бүртгүүлсэн', 'Төлөв', ''],
+        <div class="full"><button class="btn btn-primary" type="submit" id="uGo">Нэмэх</button> <span class="muted small">Нэвтрэх нэр, ПИН кодыг тухайн хүнд өөрөө дамжуулна уу.</span></div></form>`;
+      B.innerHTML = form + tbl(role === 'supplier' ? ['Нийлүүлэгч', 'Утасны дугаар', 'Идэвхтэй зар', 'Зарын хязгаар', 'Нийт борлуулалт', 'Төлөв', ''] : ['Нэр', 'Утасны дугаар', 'Имэйл / нэр', 'Төлсөн захиалга', 'Бүртгүүлсэн', 'Төлөв', ''],
         list.map((u) => {
           const nm = esc(u.display_name || u.username || u.email || '—'), stp = u.blocked ? '<span class="pill p-blocked">Хаагдсан</span>' : '<span class="pill p-active">Идэвхтэй</span>';
           const blk = u.id === S.session.user.id ? '' : `<button class="btn btn-ghost btn-sm" type="button" data-blk="${u.id}" data-v="${!u.blocked}">${u.blocked ? 'Нээх' : 'Хаах'}</button>`;
           const pin = (u.email == null && u.username) ? `<button class="btn btn-ghost btn-sm" type="button" data-pin="${u.id}">ПИН сэргээх</button>` : '';
           if (role === 'supplier') return `<tr><td><b>${nm}</b><div class="muted small">${esc(u.username || '')}</div></td><td class="n">${phoneFmt(u.phone)}</td><td class="n">${u.active_listings}</td><td><input class="isel" style="width:70px" type="number" min="0" max="100" value="${u.max_listings}" data-max="${u.id}" aria-label="Зарын хязгаар"></td><td class="n">${money(u.sales)}</td><td>${stp}</td><td class="act">${pin}${blk}</td></tr>`;
-          if (role === 'admin') return `<tr><td><b>${nm}</b></td><td>${u.admin_level === 'owner' ? 'Эзэмшигч' : 'Менежер'}</td><td class="n">${phoneFmt(u.phone)}</td><td class="small">${esc(u.email || u.username || '')}</td><td>${stp}</td><td class="act">${owner && u.id !== S.session.user.id ? `<button class="btn btn-ghost btn-sm" type="button" data-role="${u.id}" data-r="customer">Админ эрх хасах</button>` : ''}${owner ? pin + blk : ''}</td></tr>`;
-          return `<tr><td><b>${nm}</b></td><td class="n">${phoneFmt(u.phone)}</td><td class="small">${esc(u.email || u.username || '')}</td><td class="n">${u.orders_paid}</td><td class="n">${fmtDT(u.created_at)}</td><td>${stp}</td><td class="act"><button class="btn btn-ghost btn-sm" type="button" data-role="${u.id}" data-r="supplier">Нийлүүлэгч болгох</button>${owner ? `<button class="btn btn-ghost btn-sm" type="button" data-role="${u.id}" data-r="admin">Админ болгох</button>` : ''}${pin}${blk}</td></tr>`;
+          return `<tr><td><b>${nm}</b></td><td class="n">${phoneFmt(u.phone)}</td><td class="small">${esc(u.email || u.username || '')}</td><td class="n">${u.orders_paid}</td><td class="n">${fmtDT(u.created_at)}</td><td>${stp}</td><td class="act"><button class="btn btn-ghost btn-sm" type="button" data-role="${u.id}" data-r="supplier">Нийлүүлэгч болгох</button>${pin}${blk}</td></tr>`;
         }));
-      const uf = $('#uf'); if (uf) uf.onsubmit = async (e) => { e.preventDefault(); const b = $('#uGo'); busy(b, true); try { await fn('admin-users', { action: 'create', role, name: $('#uName').value, phone: $('#uPhone').value, username: $('#uUser').value, pin: $('#uPin').value, max_listings: $('#uMax') ? +$('#uMax').value : 5, level: $('#uLvl') ? $('#uLvl').value : null }); toast('Бүртгэл үүслээ'); drawTabs(); loadDash(); } catch (err) { toast(nice(err), true); busy(b, false); } };
+      const uf = $('#uf'); if (uf) uf.onsubmit = async (e) => { e.preventDefault(); const b = $('#uGo'); busy(b, true); try { await fn('admin-users', { action: 'create', role, name: $('#uName').value, phone: $('#uPhone').value, username: $('#uUser').value, pin: $('#uPin').value, max_listings: $('#uMax') ? +$('#uMax').value : 5 }); toast('Бүртгэл үүслээ'); drawTabs(); loadDash(); } catch (err) { toast(nice(err), true); busy(b, false); } };
       $$('#admBody [data-blk]').forEach((b) => (b.onclick = async () => { try { await rpc('admin_set_blocked', { p_user: b.dataset.blk, p_blocked: b.dataset.v === 'true' }); toast(b.dataset.v === 'true' ? 'Хаагдлаа' : 'Нээгдлээ'); drawTabs(); } catch (err) { toast(nice(err), true); } }));
       $$('#admBody [data-max]').forEach((i) => (i.onchange = async () => { try { await rpc('admin_set_role', { p_user: i.dataset.max, p_role: 'supplier', p_level: null, p_max: +i.value }); toast('Зарын хязгаар шинэчлэгдлээ'); } catch (err) { toast(nice(err), true); } }));
-      $$('#admBody [data-role]').forEach((b) => (b.onclick = async () => { try { await rpc('admin_set_role', { p_user: b.dataset.role, p_role: b.dataset.r, p_level: b.dataset.r === 'admin' ? 'manager' : null, p_max: null }); toast('Эрх шинэчлэгдлээ'); drawTabs(); loadDash(); } catch (err) { toast(nice(err), true); } }));
+      $$('#admBody [data-role]').forEach((b) => (b.onclick = async () => { try { await rpc('admin_set_role', { p_user: b.dataset.role, p_role: b.dataset.r, p_level: null, p_max: null }); toast('Эрх шинэчлэгдлээ'); drawTabs(); loadDash(); } catch (err) { toast(nice(err), true); } }));
       $$('#admBody [data-pin]').forEach((b) => (b.onclick = () => {
         openModal('ПИН код сэргээх', `<label class="inp">Шинэ ПИН код (6 оронтой)<input id="npin" inputmode="numeric" maxlength="6"></label><button class="btn btn-primary" type="button" id="npGo">Хадгалах</button><p class="muted small" style="margin:0">Шинэ кодыг тухайн хүнд өөрөө дамжуулна уу.</p>`);
         $('#npGo').onclick = async (e) => { const x = e.currentTarget; busy(x, true); try { await fn('admin-users', { action: 'reset_pin', user_id: b.dataset.pin, pin: $('#npin').value.trim() }); closeModal(); toast('ПИН код солигдлоо'); } catch (err) { toast(nice(err), true); busy(x, false); } };
@@ -651,7 +677,7 @@ async function drawTabs() {
     }
     if (ADM.tab === 'feedback') {
       const list = await rpc('admin_feedback');
-      B.innerHTML = tbl(['Огноо', 'Төрөл', 'Захиалга', 'Хэнээс', 'Мессеж', 'Төлөв', ''], list.map((f) => `<tr><td class="n">${fmtDT(f.created_at)}</td><td>${esc(f.kind)}</td><td class="n">${f.order_no ? '#' + f.order_no : '—'}</td><td>${esc(f.user_name || 'Зочин')}<div class="mono small muted">${phoneFmt(f.phone)}</div></td><td style="min-width:240px">${esc(f.message)}${f.reply ? `<div class="muted small">Хариу: ${esc(f.reply)}</div>` : ''}</td><td><span class="pill p-${f.status}">${f.status === 'open' ? 'Нээлттэй' : 'Шийдвэрлэсэн'}</span></td><td class="act">${f.status === 'open' ? `<button class="btn btn-ok btn-sm" type="button" data-fb="${f.id}">Шийдвэрлэсэн</button>` : ''}</td></tr>`));
+      B.innerHTML = tbl(['Огноо', 'Төрөл', 'Захиалга', 'Хэнээс', 'Мессеж', 'Төлөв', ''], list.map((f) => `<tr><td class="n">${fmtDT(f.created_at)}</td><td>${esc(f.kind)}</td><td class="n">${f.order_no ? '#' + f.order_no : f.order_ref ? esc(f.order_ref) + '<div class="muted small">бичсэн</div>' : '—'}</td><td>${esc(f.user_name || 'Зочин')}<div class="mono small muted">${phoneFmt(f.phone)}</div></td><td style="min-width:240px">${esc(f.message)}${f.reply ? `<div class="muted small">Хариу: ${esc(f.reply)}</div>` : ''}</td><td><span class="pill p-${f.status}">${f.status === 'open' ? 'Нээлттэй' : 'Шийдвэрлэсэн'}</span></td><td class="act">${f.status === 'open' ? `<button class="btn btn-ok btn-sm" type="button" data-fb="${f.id}">Шийдвэрлэсэн</button>` : ''}</td></tr>`));
       $$('#admBody [data-fb]').forEach((b) => (b.onclick = async () => { try { await rpc('admin_feedback_done', { p_id: +b.dataset.fb, p_reply: null }); toast('Шийдвэрлэсэн'); drawTabs(); loadDash(); } catch (err) { toast(nice(err), true); } }));
     }
     if (ADM.tab === 'settings') {
@@ -661,20 +687,83 @@ async function drawTabs() {
         <label class="inp">Нэг захиалгын дээд литр<input id="sMax" type="number" min="1" value="${s.max_liters}"></label>
         <label class="inp">Төлбөр хүлээх хугацаа (мин)<input id="sPend" type="number" min="5" max="60" value="${s.pending_minutes}"></label>
         <label class="inp">Ажлын цаг<input id="sHours" value="${esc(s.work_hours || '24/7')}"></label>
-        <label class="inp">Тусламжийн утас 1<input id="sP1" type="tel" value="${esc(s.contact_phone1 || '')}"></label>
-        <label class="inp">Тусламжийн утас 2<input id="sP2" type="tel" value="${esc(s.contact_phone2 || '')}"></label>
+        <label class="inp">Тусламжийн утасны дугаар 1<input id="sP1" type="tel" value="${esc(s.contact_phone1 || '')}"></label>
+        <label class="inp">Тусламжийн утасны дугаар 2<input id="sP2" type="tel" value="${esc(s.contact_phone2 || '')}"></label>
         <label class="inp full">Тусламжийн имэйл<input id="sMail" type="email" value="${esc(s.contact_email || '')}"></label>
-        <p class="muted small full" style="margin:0">Тусламжийн утас, имэйл зөвхөн төлбөр төлсөн хэрэглэгчид харагдана.</p>
+        <p class="muted small full" style="margin:0">Тусламжийн утасны дугаар, имэйл зөвхөн төлбөр төлсөн хэрэглэгчид харагдана.</p>
         <div class="full"><button class="btn btn-primary" type="submit" id="sGo">Хадгалах</button></div></form>`;
       $('#sf').onsubmit = async (e) => { e.preventDefault(); const b = $('#sGo'); busy(b, true); try { await rpc('admin_update_settings', { p: { min_liters: +$('#sMin').value, max_liters: +$('#sMax').value, pending_minutes: +$('#sPend').value, work_hours: $('#sHours').value, contact_phone1: $('#sP1').value, contact_phone2: $('#sP2').value, contact_email: $('#sMail').value } }); toast('Хадгалагдлаа'); loadSettings(); } catch (err) { toast(nice(err), true); } finally { busy(b, false); } };
     }
   } catch (err) { B.innerHTML = `<div class="box-b note err">${esc(nice(err))}</div>`; }
 }
 function csv(list) {
-  const cols = [['order_no', '№'], ['created_at', 'Огноо'], ['paid_at', 'Төлсөн'], ['status', 'Төлөв'], ['customer_name', 'Захиалагч'], ['customer_phone', 'Утас'], ['supplier_name', 'Нийлүүлэгч'], ['fuel', 'Төрөл'], ['liters', 'Литр'], ['unit_price', 'Үнэ'], ['total', 'Дүн'], ['district', 'Дүүрэг'], ['khoroo', 'Хороо'], ['org_name', 'Байгууллага'], ['address', 'Хаяг'], ['car_plate', 'Машин']];
-  const val = (o, k) => (k === 'created_at' || k === 'paid_at' ? (o[k] ? fmtDT(o[k]) : '') : k === 'status' ? ST[o[k]] || o[k] : k === 'fuel' ? fl(o[k]).l : o[k] ?? '');
+  const cols = [['order_no', '№'], ['created_at', 'Огноо'], ['paid_at', 'Төлсөн'], ['status', 'Төлөв'], ['customer_name', 'Захиалагч'], ['customer_phone', 'Утасны дугаар'], ['supplier_name', 'Нийлүүлэгч'], ['fuel', 'Төрөл'], ['liters', 'Литр'], ['unit_price', 'Үнэ'], ['total', 'Дүн'], ['district', 'Дүүрэг'], ['khoroo', 'Хороо'], ['org_name', 'Байгууллага'], ['address', 'Хаяг'], ['car_plate', 'Машин'], ['pay', 'Төлбөр']];
+  const val = (o, k) => (k === 'pay' ? (o.manual ? 'Гараар · ' + (PAY[o.pay_method] || '') : o.qpay_payment_id === 'ADMIN-TEST' ? 'Туршилт' : o.paid_at ? 'QPay' : '') : k === 'created_at' || k === 'paid_at' ? (o[k] ? fmtDT(o[k]) : '') : k === 'status' ? ST[o[k]] || o[k] : k === 'fuel' ? fl(o[k]).l : o[k] ?? '');
   const lines = [cols.map((c) => c[1]).join(',')].concat(list.map((o) => cols.map(([k]) => '"' + String(val(o, k)).replace(/"/g, '""') + '"').join(',')));
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' })); a.download = 'shag-zahialga-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* Утсаар ирсэн захиалгыг админ гараар бүртгэх */
+async function manualOrder() {
+  let list = [];
+  try { list = ((await rpc('admin_listings')) || []).filter((l) => l.status !== 'finished' && l.avail_l > 0); } catch (err) { return toast(nice(err), true); }
+  if (!list.length) return toast('Үлдэгдэлтэй зар алга. Эхлээд “Зарууд” хэсэгт зар нэмнэ үү', true);
+  let loc = null, when = 'now', pay = 'cash', mm = null, mk = null;
+  openModal('Гараар хүргэлт нэмэх', `
+    <p class="muted small" style="margin:0">Утсаар болон биечлэн ирсэн захиалгыг бүртгэнэ. Нийлүүлэгчийн самбарт “Шинэ” захиалга болж шууд орно, захиалагчийн утасны дугаар нийлүүлэгчид харагдана.</p>
+    <label class="inp">Нийлүүлэгч, зар<select id="moL">${list.map((l) => `<option value="${l.id}">${esc(l.supplier_name)} · ${fl(l.fuel).l} · ${money(l.price)}/л · ${fmt(l.avail_l)} л</option>`).join('')}</select></label>
+    <div class="grid2">
+      <label class="inp">Литр<input id="moLit" type="number" inputmode="numeric" min="1" value="40"></label>
+      <label class="inp">1 литрийн үнэ (₮)<input id="moPrice" type="number" inputmode="numeric" min="500" max="20000"></label>
+    </div>
+    <div class="pump" aria-live="polite"><div class="pump-row"><label>Нийт дүн ₮</label><span class="d" id="moTot">0</span></div></div>
+    <div class="eyebrow">Захиалагч</div>
+    <div class="grid2">
+      <label class="inp">Нэр<input id="moName" maxlength="80" placeholder="жишээ нь Бат"></label>
+      <label class="inp">Утасны дугаар<input id="moPhone" type="tel" inputmode="numeric" maxlength="8" placeholder="99xxxxxx"></label>
+      <label class="inp">Дүүрэг<select id="moDist">${DISTRICTS.map((d) => `<option>${d}</option>`).join('')}</select></label>
+      <label class="inp">Хороо<input id="moKh" maxlength="40" placeholder="жишээ нь 1-р хороо"></label>
+      <label class="inp full">Байгууллагын нэр (байвал)<input id="moOrg" maxlength="120"></label>
+      <label class="inp full">Дэлгэрэнгүй хаяг, зогсоол<input id="moAddr" maxlength="300" placeholder="Байр, орц, зогсоолын байрлал"></label>
+      <label class="inp">Машины улсын дугаар<input id="moCar" maxlength="20" placeholder="0000 УБА" autocapitalize="characters"></label>
+      <label class="inp">Нэмэлт тайлбар<input id="moNote" maxlength="300"></label>
+    </div>
+    <details id="moMapD"><summary class="muted small" style="cursor:pointer">Газрын зураг дээр хүргэх цэг заах (заавал биш)</summary><div class="minimap" id="moMap" style="margin-top:10px"></div><p class="muted small" id="moMapT" style="margin:6px 0 0">Газрын зураг дээр дарж цэг заана уу</p></details>
+    <div class="eyebrow">Хүргэх цаг</div>
+    <div class="seg2" role="group" aria-label="Хүргэх цаг" id="moWhenG"><button type="button" data-w="now" aria-pressed="true">Аль болох хурдан</button><button type="button" data-w="at" aria-pressed="false">Цаг товлох</button></div>
+    <label class="inp" id="moWhenBox" hidden>Товлосон цаг<input id="moWhen" type="datetime-local"></label>
+    <div class="eyebrow">Төлбөр</div>
+    <div class="seg2 four" role="group" aria-label="Төлбөрийн хэлбэр" id="moPayG">${Object.entries(PAY).map(([k, v]) => `<button type="button" data-p="${k}" aria-pressed="${k === pay}">${v}</button>`).join('')}</div>
+    <button class="btn btn-primary" type="button" id="moGo">Хүргэлт нэмэх</button>`);
+  const sel = () => list.find((l) => l.id === +$('#moL').value);
+  const upd = () => { const l = sel(), lit = Math.max(0, Math.round(+$('#moLit').value || 0)), pr = +$('#moPrice').value || l.price; $('#moTot').textContent = fmt(lit * pr); $('#moGo').textContent = 'Хүргэлт нэмэх · ' + money(lit * pr); };
+  const setPrice = () => { $('#moPrice').value = sel().price; $('#moLit').max = sel().avail_l; upd(); };
+  $('#moL').onchange = setPrice; $('#moLit').oninput = upd; $('#moPrice').oninput = upd; setPrice();
+  $('#moMapD').addEventListener('toggle', () => {
+    if (!$('#moMapD').open || mm) { if (mm) setTimeout(() => mm.invalidateSize(), 60); return; }
+    mm = L.map('moMap', { zoomControl: true }).setView(UB, 12); tiles(mm);
+    mm.on('click', (e) => { loc = { lat: e.latlng.lat, lng: e.latlng.lng }; if (!mk) { mk = L.marker([loc.lat, loc.lng], { icon: youIcon(), draggable: true }).addTo(mm); mk.on('dragend', () => { const q = mk.getLatLng(); loc = { lat: q.lat, lng: q.lng }; }); } else mk.setLatLng([loc.lat, loc.lng]); $('#moMapT').textContent = 'Цэг заагдлаа. Чирж нарийвчилж болно'; });
+    setTimeout(() => mm.invalidateSize(), 80);
+  });
+  onClose(() => { if (mm) mm.remove(); });
+  $$('#moWhenG button').forEach((b) => (b.onclick = () => { when = b.dataset.w; $$('#moWhenG button').forEach((x) => x.setAttribute('aria-pressed', x === b)); $('#moWhenBox').hidden = when !== 'at'; if (when === 'at' && !$('#moWhen').value) { const d = new Date(Date.now() + 3600e3); d.setMinutes(0, 0, 0); $('#moWhen').value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); } }));
+  $$('#moPayG button').forEach((b) => (b.onclick = () => { pay = b.dataset.p; $$('#moPayG button').forEach((x) => x.setAttribute('aria-pressed', x === b)); }));
+  $('#moGo').onclick = async (e) => {
+    const btn = e.currentTarget, l = sel(), lit = Math.round(+$('#moLit').value || 0), pr = Math.round(+$('#moPrice').value || 0);
+    const phone = $('#moPhone').value.replace(/\D/g, ''), addr = $('#moAddr').value.trim(), org = $('#moOrg').value.trim();
+    if (!(lit >= 1)) { $('#moLit').focus(); return toast('Литрээ оруулна уу', true); }
+    if (lit > l.avail_l) { $('#moLit').focus(); return toast(`Зарын үлдэгдэл ${fmt(l.avail_l)} л байна`, true); }
+    if (!(pr >= 500 && pr <= 20000)) { $('#moPrice').focus(); return toast('1 литрийн үнэ 500 – 20,000₮', true); }
+    if (!/^[5-9]\d{7}$/.test(phone)) { $('#moPhone').focus(); return toast('Утасны дугаар 8 оронтой', true); }
+    if (!addr && !org && !loc) { $('#moAddr').focus(); return toast('Хаяг, байгууллага эсвэл газрын зураг дээрх цэгийн аль нэгийг оруулна уу', true); }
+    let sched = null;
+    if (when === 'at') { const v = $('#moWhen').value; if (!v) return toast('Товлох цагаа сонгоно уу', true); sched = new Date(v).toISOString(); }
+    busy(btn, true, 'Бүртгэж байна');
+    try {
+      const r = await rpc('admin_create_order', { p_listing: l.id, p_liters: lit, p_name: $('#moName').value.trim(), p_phone: phone, p_lat: loc ? loc.lat : null, p_lng: loc ? loc.lng : null, p_district: $('#moDist').value, p_khoroo: $('#moKh').value.trim(), p_org: org, p_address: addr, p_car: $('#moCar').value.trim(), p_note: $('#moNote').value.trim(), p_scheduled: sched, p_method: pay, p_price: pr });
+      closeModal(); toast(`Хүргэлт #${r.order_no} нэмэгдлээ · нийлүүлэгчид илгээгдлээ`); ADM.status = ''; drawTabs(); loadDash(); loadListings();
+    } catch (err) { toast(nice(err), true); busy(btn, false); }
+  };
 }
 
 /* ================= Хууль зүйн хуудас ================= */
@@ -682,7 +771,7 @@ const DOCS = {
   nuutslal: `<div class="eyebrow">Шаг</div><h1>Нууцлалын бодлого</h1><p class="muted">Хүчин төгөлдөр: 2026.11.02</p>
     <p>Шаг (shagiinbenzin.mn) нь Хүний хувийн мэдээллийг хамгаалах тухай хуулийн дагуу таны мэдээллийг зөвхөн шатахуун хүргэх үйлчилгээ үзүүлэхэд ашиглана.</p>
     <h3>Ямар мэдээлэл цуглуулдаг вэ</h3><ul><li>Нэр, нэвтрэх нэр эсвэл Google имэйл</li><li>Утасны дугаар</li><li>Хүргэх байршил (газрын зураг дээрх цэг), дүүрэг, хороо, хаяг, байгууллагын нэр, машины улсын дугаар</li><li>Захиалга, төлбөрийн түүх (картын болон дансны мэдээллийг бид хадгалдаггүй, төлбөрийг QPay боловсруулна)</li><li>Нийлүүлэгчийн хувьд: ажлын үеийн байршил (зөвхөн самбар нээлттэй, байршил шинэчлэх асаалттай үед)</li></ul>
-    <h3>Хэнд харагдах вэ</h3><p>Таны утас, хаяг зөвхөн таны төлбөр төлсөн захиалгын нийлүүлэгчид, нийлүүлэгчийн утас зөвхөн танд төлбөрийн дараа харагдана. Бусад хэрэглэгч, нийлүүлэгчид таны дугаар харагдахгүй. Админ үйлчилгээг хянах зорилгоор бүх захиалгыг харна.</p>
+    <h3>Хэнд харагдах вэ</h3><p>Таны утасны дугаар, хаяг зөвхөн таны төлбөр төлсөн захиалгын нийлүүлэгчид, нийлүүлэгчийн утасны дугаар зөвхөн танд төлбөрийн дараа харагдана. Бусад хэрэглэгч, нийлүүлэгчид таны дугаар харагдахгүй. Админ үйлчилгээг хянах зорилгоор бүх захиалгыг харна.</p>
     <h3>Хадгалах хугацаа</h3><p>Захиалгын мэдээллийг тайлан, маргаан шийдвэрлэх зорилгоор 3 жил хадгална. Бүртгэлээ устгуулах бол “Админтай холбогдох” хэсгээр хүсэлт илгээнэ үү.</p>
     <h3>Аюулгүй байдал</h3><p>Мэдээллийг шифрлэсэн холболтоор дамжуулж, эрхийн хяналттай сан дээр хадгална. ПИН кодоо бусдад бүү хэлээрэй.</p>
     <h3>Газрын зураг, күүки</h3><p>Газрын зургийг OpenStreetMap-аас ачаалдаг. Бид зар сурталчилгааны күүки ашигладаггүй; нэвтрэлтийг таны хөтөч дээр хадгална.</p>`,
@@ -690,7 +779,7 @@ const DOCS = {
     <h3>1. Үйлчилгээ</h3><p>Шаг нь шатахуун нийлүүлэгчдийн зарыг нэгтгэж, хэрэглэгч захиалга өгөх, QPay-р төлөх, нийлүүлэгч хүргэлт хийх боломжийг олгоно. Хүргэлт үнэгүй.</p>
     <h3>2. Бүртгэл</h3><p>Хэрэглэгч Google эсвэл нэр, 6 оронтой ПИН кодоор бүртгүүлнэ. Нэвтрэх мэдээллээ хадгалах үүргийг хэрэглэгч хариуцна. Худал мэдээлэл, хуурамч захиалга өгсөн бүртгэлийг админ хааж болно.</p>
     <h3>3. Захиалга, үнэ</h3><p>Үнэ захиалга үүсгэх үеийн 1 литрийн үнээр тогтоно. Төлбөр эхлэхэд литр тодорхой хугацаанд (анхдагчаар 15 минут) нөөцлөгдөнө; хугацаандаа төлөгдөөгүй захиалга автоматаар хүчингүй болно.</p>
-    <h3>4. Төлбөр</h3><p>Төлбөрийг зөвхөн QPay-р урьдчилан төлнө. Төлбөр баталгаажсаны дараа хүргэлт гарна.</p>
+    <h3>4. Төлбөр</h3><p>Сайтаар өгсөн захиалгын төлбөрийг QPay-р урьдчилан төлнө. Төлбөр баталгаажсаны дараа хүргэлт гарна. Шагийн тусламжийн утсаар өгсөн захиалгыг админ бүртгэх бөгөөд төлбөрийн хэлбэрийг тухайн үед тохиролцоно.</p>
     <h3>5. Хүргэлт</h3><p>Нийлүүлэгч хэрэглэгчийн заасан байршилд очиж шатахууныг өгнө. Сайтад харагдах ирэх хугацаа нь зайнаас тооцсон ойролцоо утга. Хэрэглэгч хүргэлт хүлээн авсны дараа “Хүлээн авлаа” товчоор баталгаажуулна.</p>
     <h3>6. Аюулгүй ажиллагаа</h3><p>Шатахуун цэнэглэх үед хөдөлгүүрээ унтрааж, тамхи татахгүй, нийлүүлэгчийн зааврыг дагана.</p>
     <h3>7. Гомдол</h3><p>Захиалгатай холбоотой гомдлыг захиалгын дэлгэрэнгүй хэсгээс эсвэл “Санал хүсэлт” маягтаар илгээнэ. Админ 24/7 хүлээн авна.</p>`,
@@ -705,7 +794,8 @@ $('#fbForm').onsubmit = async (e) => {
   e.preventDefault(); const b = e.submitter || $('#fbForm button'), m = $('#fbMsg').value.trim();
   if (m.length < 3) { $('#fbMsg').focus(); return toast('Мессежээ бичнэ үү', true); }
   busy(b, true);
-  try { await rpc('submit_feedback', { p_kind: $('#fbType').value, p_message: m, p_phone: $('#fbPhone').value, p_order: null }); $('#fbMsg').value = ''; toast('Илгээгдлээ. Админ хүлээн авлаа.'); } catch (err) { toast(nice(err), true); } finally { busy(b, false); }
+  const kind = ($('#fbForm input[name="fbType"]:checked') || {}).value || 'Санал', ref = $('#fbOrder').value.trim().replace(/^#/, '');
+  try { await rpc('submit_feedback', { p_kind: kind, p_message: m, p_phone: $('#fbPhone').value, p_order: null, p_order_ref: ref || null }); $('#fbMsg').value = ''; $('#fbOrder').value = ''; toast('Илгээгдлээ. Админ хүлээн авлаа.'); } catch (err) { toast(nice(err), true); } finally { busy(b, false); }
 };
 
 /* ================= Чиглүүлэлт ================= */
@@ -714,6 +804,7 @@ function route() {
   const v = ['minii', 'niiluulegch', 'admin'].includes(h) ? h : ['nuutslal', 'nokhtsol', 'butsaalt'].includes(h) ? 'doc' : 'home';
   const prev = S.view; S.view = v === 'doc' ? h : v;
   ['home', 'minii', 'niiluulegch', 'admin', 'doc'].forEach((k) => ($('#v-' + k).hidden = k !== v));
+  $('#holboo').classList.toggle('app', v !== 'home' && v !== 'doc');
   $$('.nav a').forEach((a) => a.setAttribute('aria-current', a.dataset.nav === v ? 'page' : 'false'));
   const vid = $('#hvid'); if (vid) { if (v === 'home' && !RM) vid.play().catch(() => {}); else vid.pause(); }
   if (v === 'minii') renderMyOrders();

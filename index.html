@@ -7,7 +7,7 @@
 <meta name="description" content="Бензин, дизелийг таны байгаа газарт хүргэнэ. Шатахууны төрлөө сонгоод ойрын нийлүүлэгчийг газрын зураг дээр харж, QPay-р төлнө.">
 <meta name="theme-color" content="#0A0F14">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Шаг — шатахуун тан руу очно">
+<meta property="og:title" content="Шаг — түгжрэлд цаг үрэлгүй шуурхай шатахуун захиал">
 <meta property="og:description" content="Бензин, дизелийг таны байгаа газарт хүргэнэ. QPay-р төлнө.">
 <meta property="og:image" content="https://shagiinbenzin.mn/a/og.jpg">
 <meta property="og:url" content="https://shagiinbenzin.mn/">
@@ -45,9 +45,12 @@ h1,h2,h3{text-wrap:balance;margin:0}
 h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:.02em;font-size:clamp(28px,3.6vw,44px);line-height:1.02}
 .lead{color:var(--fog);max-width:62ch;margin:10px 0 0}
 .muted{color:var(--fog)}.small{font-size:13px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:999px;padding:12px 20px;font-weight:700;font-size:14.5px;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s;white-space:nowrap}
-.btn:active{transform:translateY(1px)}
-.btn-primary{background:var(--sodium);color:var(--sodium-ink);box-shadow:0 8px 28px -10px rgba(255,176,46,.7)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:999px;padding:12px 20px;font-weight:700;font-size:14.5px;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s,transform .2s cubic-bezier(.2,.7,.2,1);white-space:nowrap}
+.btn:hover:not([disabled]){transform:translateY(-1px)}
+.btn:active:not([disabled]){transform:translateY(1px) scale(.98);transition-duration:.06s}
+.btn svg{transition:transform .25s cubic-bezier(.2,.7,.2,1)}
+.btn:hover svg{transform:translateX(4px)}
+.btn-primary{background:var(--sodium);color:var(--sodium-ink)}
 .btn-primary:hover{background:#FFC04F}
 .btn-ghost{background:rgba(255,255,255,.04);border-color:var(--line-2);color:var(--frost)}
 .btn-ghost:hover{border-color:var(--fog-2);background:rgba(255,255,255,.07)}
@@ -72,26 +75,33 @@ h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-sp
 .user-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .user-chip button{border:0;background:var(--raise-2);color:var(--fog);border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer}
 
-.hero{position:relative;isolation:isolate;overflow:hidden;min-height:min(78vh,760px);display:flex;align-items:flex-end;border-bottom:1px solid var(--line)}
+.hero{position:relative;isolation:isolate;overflow:hidden;min-height:min(88vh,860px);display:flex;align-items:flex-end;border-bottom:1px solid var(--line)}
 .hero-media{position:absolute;inset:0;z-index:-1;background:#06090c url("a/hero.jpg") center/cover no-repeat}
 .hero-media video{width:100%;height:100%;object-fit:cover;object-position:50% 55%;animation:push 18s ease-in-out infinite alternate;transform-origin:50% 45%}
 @keyframes push{from{transform:scale(1.08)}to{transform:scale(1)}}
-.hero-media::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,11,15,.93) 0%,rgba(7,11,15,.74) 36%,rgba(7,11,15,.16) 70%,rgba(7,11,15,.36) 100%),linear-gradient(180deg,rgba(7,11,15,.45) 0%,rgba(7,11,15,0) 30%,rgba(10,15,20,.2) 70%,var(--asphalt) 100%)}
-.hero-grid{width:100%;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:48px;align-items:end;padding-block:110px 60px}
-.hero h1{font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:clamp(46px,7.2vw,104px);line-height:.9;margin:14px 0 0}
-.hero h1 .l{display:block;animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
-.hero h1 .l:nth-child(2){animation-delay:.12s;color:var(--sodium)}
-@keyframes rise{from{transform:translateY(18px);opacity:.35}to{transform:none;opacity:1}}
-.hero p.sub{font-size:clamp(16px,1.45vw,18.5px);color:#C7D2DA;max-width:52ch;margin:22px 0 0}
+.hero-media::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,11,15,.86) 0%,rgba(7,11,15,.5) 45%,rgba(7,11,15,.12) 100%),linear-gradient(180deg,rgba(7,11,15,.55) 0%,rgba(7,11,15,.1) 22%,rgba(7,11,15,.38) 48%,rgba(10,15,20,.9) 82%,var(--asphalt) 100%)}
+.hero-in{width:100%;padding-block:120px 56px}
+.hero-h{font-family:var(--display);font-weight:700;font-size:clamp(40px,7vw,100px);line-height:.98;letter-spacing:-.01em;margin:16px 0 0;text-wrap:initial}
+.hero-h .w{display:inline-block;overflow:hidden;vertical-align:top;padding:.16em .03em .1em;margin:-.16em -.03em -.1em}
+.hero-h .w>span{display:inline-block;animation:wordup .95s cubic-bezier(.2,.75,.15,1) both;animation-delay:calc(.12s + var(--i,0) * 75ms)}
+@keyframes wordup{from{transform:translateY(112%)}to{transform:none}}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:48px;align-items:end;margin-top:30px}
+.hero-grid>div:first-child{align-self:start;padding-top:6px}
+.fx{animation:fadeup .8s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(.6s + var(--i,0) * 90ms)}
+@keyframes fadeup{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.hero p.sub{font-size:clamp(16px,1.45vw,18.5px);color:#D3DCE2;max-width:54ch;margin:0}
 .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
 .trust{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:28px;font-size:13px;color:#B5C1CA}
 .trust span{display:inline-flex;align-items:center;gap:8px}
 .trust svg{width:16px;height:16px;color:var(--sodium);flex:none}
-.pylon{justify-self:end;width:100%;max-width:380px;background:linear-gradient(180deg,rgba(16,25,33,.92),rgba(10,15,20,.94));border:1px solid var(--line-2);border-radius:18px;padding:18px 18px 14px;box-shadow:0 30px 80px -30px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.05)}
+.pylon{justify-self:end;width:100%;max-width:380px;background:rgba(10,15,20,.9);border:1px solid var(--line-2);border-radius:18px;padding:18px 18px 14px}
 .pylon-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line-2);padding-bottom:10px;margin-bottom:6px}
 .pylon-head b{font-family:var(--display);text-transform:uppercase;letter-spacing:.12em;font-size:13px;font-weight:600}
 .pylon-head span{font-family:var(--mono);font-size:11px;color:var(--fog)}
-.prow{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(36,52,66,.7);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left}
+.prow{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(36,52,66,.7);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;transition:background .15s}
+.prow:hover{background:rgba(255,176,46,.05)}
+.boot .prow{animation:ledon .6s steps(3,end) both;animation-delay:calc(1s + var(--i,0) * 130ms)}
+@keyframes ledon{0%{opacity:0}40%{opacity:.6}60%{opacity:.25}100%{opacity:1}}
 .prow:last-of-type{border-bottom:0}
 .ftag{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.04em;text-transform:uppercase;padding:5px 0 5px 10px;border-left:3px solid var(--c)}
 .led{position:relative;justify-self:end;font-family:var(--mono);font-weight:700;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
@@ -106,8 +116,9 @@ h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-sp
 section.band{padding-block:64px}
 .sec-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px;margin-bottom:22px}
 .fuels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}
-.fuel{display:grid;gap:6px;text-align:left;cursor:pointer;background:var(--night);border:1px solid var(--line);border-radius:var(--r);padding:16px;border-top:3px solid var(--c);transition:border-color .15s,background .15s}
-.fuel:hover{background:var(--raise)}
+.fuel{display:grid;gap:6px;text-align:left;cursor:pointer;background:var(--night);border:1px solid var(--line);border-radius:var(--r);padding:16px;border-top:3px solid var(--c);transition:border-color .15s,background .15s,transform .2s cubic-bezier(.2,.7,.2,1)}
+.fuel:hover{background:var(--raise);transform:translateY(-2px)}
+.fuel:active{transform:scale(.985);transition-duration:.06s}
 .fuel[aria-pressed="true"]{border-color:var(--sodium);background:var(--sodium-soft);box-shadow:inset 0 0 0 1px var(--sodium)}
 .fuel b{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .fuel .p{font-family:var(--mono);font-weight:700;color:var(--sodium);font-size:18px}
@@ -132,9 +143,13 @@ section.band{padding-block:64px}
 .mk b{font-family:var(--mono);font-size:12.5px;font-weight:700;background:#0E161D;color:var(--frost);border:1.5px solid var(--c);border-radius:7px;padding:3px 7px;white-space:nowrap}
 .mk i{width:12px;height:12px;border-radius:50%;background:var(--c);border:3px solid #0A0F14;margin-top:3px}
 .mk.on b{background:var(--sodium);color:var(--sodium-ink)}
+.mk b,.mk i{transform-origin:50% 100%}
+.map.pop .mk b,.map.pop .mk i{animation:pin .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0) * 60ms)}
+@keyframes pin{from{transform:scale(.4) translateY(8px);opacity:0}to{transform:none;opacity:1}}
 .you{width:22px;height:22px;border-radius:50%;background:var(--sodium);border:4px solid #0A0F14;box-shadow:0 0 0 6px rgba(255,176,46,.25);transform:translate(-50%,-50%)}
 .truck{width:30px;height:30px;border-radius:50%;background:var(--ok);border:3px solid #0A0F14;display:grid;place-items:center;transform:translate(-50%,-50%);box-shadow:0 0 0 6px rgba(60,214,154,.25)}
 .list{display:grid;gap:12px}
+.list.pop .card{animation:fadeup .55s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0) * 70ms)}
 .card{display:grid;grid-template-columns:190px minmax(0,1fr);background:var(--night);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .card.on{border-color:var(--sodium);box-shadow:0 0 0 1px var(--sodium) inset}
 .card .ph{position:relative;min-height:100%;background:var(--raise) url("a/tanker-dawn.jpg") center/cover}
@@ -163,7 +178,9 @@ section.band{padding-block:64px}
 .empty{padding:36px 20px;text-align:center;color:var(--fog);background:var(--night);border:1px dashed var(--line-2);border-radius:var(--r)}
 .how{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center}
 .how figure{margin:0;border-radius:18px;overflow:hidden;border:1px solid var(--line)}
-.how figure img{display:block;width:100%;aspect-ratio:5/4;object-fit:cover}
+.how figure img{display:block;width:100%;aspect-ratio:5/4;object-fit:cover;transition:transform 1.6s cubic-bezier(.2,.7,.2,1)}
+.js-rv .how figure.rv img{transform:scale(1.08)}
+.js-rv .how figure.rv.in img{transform:none}
 .steps{list-style:none;margin:24px 0 0;padding:0;display:grid}
 .steps li{display:grid;grid-template-columns:52px minmax(0,1fr);gap:16px;padding:18px 0;border-top:1px solid var(--line)}
 .steps li:last-child{border-bottom:1px solid var(--line)}
@@ -172,6 +189,16 @@ section.band{padding-block:64px}
 .steps p{margin:4px 0 0;color:var(--fog)}
 
 footer{border-top:1px solid var(--line);background:var(--night)}
+.sign{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:end;gap:20px 40px;padding-block:64px 40px;border-bottom:1px solid var(--line)}
+.sign-w{font-family:var(--display);font-weight:700;font-size:clamp(120px,21vw,300px);line-height:.74;letter-spacing:-.02em;color:var(--frost);display:block;padding-top:.1em}
+.sign-t{margin:0;font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,40px);line-height:1.05;max-width:20ch;justify-self:end;text-align:right}
+.sign-t span{display:block;font-family:var(--mono);font-weight:500;font-size:13px;color:var(--fog);margin-top:14px;letter-spacing:0}
+.seg3{display:flex;flex-wrap:wrap;gap:6px}
+.seg3 label{position:relative;cursor:pointer}
+.seg3 input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg3 span{display:block;border:1px solid var(--line-2);background:var(--raise);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:700;color:var(--fog);transition:background .15s,color .15s,border-color .15s}
+.seg3 input:checked+span{background:var(--sodium-soft);border-color:var(--sodium);color:#FFD08A}
+.seg3 input:focus-visible+span{outline:2px solid var(--sodium);outline-offset:2px}
 .foot{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;padding-block:52px 32px}
 .form{display:grid;gap:12px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -218,6 +245,7 @@ footer{border-top:1px solid var(--line);background:var(--night)}
 .seg2{display:grid;grid-template-columns:1fr 1fr;background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
 .seg2 button{border:0;background:none;padding:9px;border-radius:9px;font-weight:700;color:var(--fog);cursor:pointer}
 .seg2 button[aria-pressed="true"]{background:var(--raise-2);color:var(--frost);box-shadow:inset 0 0 0 1px var(--line-2)}
+.seg2.four{grid-template-columns:repeat(2,minmax(0,1fr))}
 .qr-wrap{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
 .qr{width:180px;height:180px;border-radius:12px;background:#fff;padding:8px;display:grid;place-items:center}
 .qr img,.qr svg{width:100%;height:100%;image-rendering:pixelated}
@@ -309,9 +337,15 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 .spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--sodium);animation:sp .8s linear infinite;display:inline-block}
 @keyframes sp{to{transform:rotate(360deg)}}
 
+.js-rv .rv{opacity:0;transform:translateY(26px)}
+.js-rv .rv.in{opacity:1;transform:none;transition:opacity .75s cubic-bezier(.2,.7,.2,1),transform .75s cubic-bezier(.2,.7,.2,1);transition-delay:calc(var(--i,0) * 80ms)}
+.tag-man{display:block;font-family:var(--body);white-space:normal;font-size:12px;font-weight:700;color:#B9D5FF;margin-top:2px}
+footer.app .sign{display:none}
 @media (max-width:1080px){.board-grid,.cols{grid-template-columns:1fr}.mapbox{position:relative;top:auto}.map{height:380px}}
 @media (max-width:860px){
-  .hero-grid{grid-template-columns:1fr;gap:26px;padding-block:90px 36px}
+  .hero-in{padding-block:96px 36px}
+  .hero-grid{grid-template-columns:1fr;gap:26px;margin-top:22px}
+  .sign{grid-template-columns:1fr}.sign-t{justify-self:start;text-align:left}
   .pylon{justify-self:stretch;max-width:none}
   .how,.foot{grid-template-columns:1fr}
   .fuels{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -325,7 +359,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
   .two,.grid2{grid-template-columns:1fr}
   .qr-wrap{grid-template-columns:1fr;justify-items:center;text-align:center}
   .banks{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .hero h1{font-size:clamp(44px,13vw,64px)}
+  .hero-h{font-size:clamp(38px,11vw,52px)}
+  .hero-h br{display:none}
   .led{font-size:28px}
   .user-chip{max-width:170px}
 }
@@ -356,35 +391,37 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 <div id="v-home">
   <section class="hero" aria-label="Нүүр">
     <div class="hero-media"><video id="hvid" autoplay muted loop playsinline preload="auto" poster="a/hero.jpg" aria-hidden="true"><source src="a/hero.mp4" type="video/mp4"></video></div>
-    <div class="wrap hero-grid">
-      <div>
-        <div class="eyebrow">Улаанбаатар · бензин, дизель хүргэлт · 24/7</div>
-        <h1><span class="l">Шатахуун</span><span class="l">тан руу очно</span></h1>
-        <p class="sub">Шатахууны төрлөө сонгоод ойрын нийлүүлэгчийг газрын зураг дээрээс харна уу. QPay-р төлсний дараа нийлүүлэгч бензин, дизелийг таны байгаа газарт үнэгүй хүргэнэ.</p>
-        <div class="cta"><a class="btn btn-primary" href="#zahialah" id="ctaOrder">Шатахуун захиалах
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
-        <div class="trust">
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM17 20h4v-3"/></svg>QPay-р урьдчилан төлнө</span>
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Утас төлбөрийн дараа нээгдэнэ</span>
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h13l4 4v3H3z"/><circle cx="7" cy="19" r="2"/><circle cx="17" cy="19" r="2"/></svg>Хүргэлт үнэгүй</span>
+    <div class="wrap hero-in">
+      <div class="eyebrow fx" style="--i:-6">Улаанбаатар · бензин, дизель хүргэлт · 24/7</div>
+      <h1 class="hero-h"><span class="w"><span style="--i:0">Түгжрэлд</span></span> <span class="w"><span style="--i:1">цаг</span></span> <span class="w"><span style="--i:2">үрэлгүй</span></span><br> <span class="w"><span style="--i:3">шуурхай</span></span> <span class="w"><span style="--i:4">шатахуун</span></span> <span class="w"><span style="--i:5">захиал</span></span></h1>
+      <div class="hero-grid">
+        <div>
+          <p class="sub fx" style="--i:0">Шатахууны төрлөө сонгоод ойрын нийлүүлэгчийг газрын зураг дээрээс харна уу. QPay-р төлсний дараа нийлүүлэгч бензин, дизелийг таны байгаа газарт үнэгүй хүргэнэ.</p>
+          <div class="cta fx" style="--i:1"><a class="btn btn-primary" href="#zahialah" id="ctaOrder">Шатахуун захиалах
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+          <div class="trust fx" style="--i:2">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM17 20h4v-3"/></svg>QPay-р урьдчилан төлнө</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Утасны дугаар төлбөрийн дараа нээгдэнэ</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h13l4 4v3H3z"/><circle cx="7" cy="19" r="2"/><circle cx="17" cy="19" r="2"/></svg>Хүргэлт үнэгүй</span>
+          </div>
         </div>
+        <aside class="pylon fx" style="--i:2" aria-label="Өнөөдрийн доод үнэ">
+          <div class="pylon-head"><b>Өнөөдрийн доод үнэ</b><span>₮ / литр</span></div>
+          <div id="pylonRows" class="boot"></div>
+          <div class="pylon-foot"><span class="live" id="pylonLive">ачаалж байна</span><span id="pylonTime"></span></div>
+        </aside>
       </div>
-      <aside class="pylon" aria-label="Өнөөдрийн доод үнэ">
-        <div class="pylon-head"><b>Өнөөдрийн доод үнэ</b><span>₮ / литр</span></div>
-        <div id="pylonRows"></div>
-        <div class="pylon-foot"><span class="live" id="pylonLive">ачаалж байна</span><span id="pylonTime"></span></div>
-      </aside>
     </div>
   </section>
 
   <section class="band" id="zahialah" aria-labelledby="ordTitle">
     <div class="wrap">
-      <div class="sec-head"><div>
+      <div class="sec-head rv"><div>
         <div class="eyebrow">1 · Шатахууны төрөл</div>
         <h2 id="ordTitle">Ямар шатахуун хэрэгтэй вэ?</h2>
         <p class="lead">Төрлөө сонгоход тэр шатахуунтай нийлүүлэгчид газрын зураг дээр гарч ирнэ.</p>
       </div></div>
-      <div class="fuels" id="fuels" role="group" aria-label="Шатахууны төрөл"></div>
+      <div class="fuels rv" style="--i:1" id="fuels" role="group" aria-label="Шатахууны төрөл"></div>
       <div id="boardWrap" hidden>
         <div class="eyebrow" style="margin:26px 0 10px">2 · Нийлүүлэгч сонгох</div>
         <div class="toolbar">
@@ -403,14 +440,13 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 
   <section class="band" id="how" style="border-top:1px solid var(--line)">
     <div class="wrap how">
-      <figure><img src="a/refuel.jpg" alt="Хүргэлтийн ажилтан цастай гудамжинд машинд шатахуун хийж байна" width="1100" height="829" loading="lazy"></figure>
-      <div>
-        <div class="eyebrow">Хэрхэн ажилладаг</div>
+      <figure class="rv"><img src="a/refuel.jpg" alt="Хүргэлтийн ажилтан цастай гудамжинд машинд шатахуун хийж байна" width="1100" height="829" loading="lazy"></figure>
+      <div class="rv" style="--i:1">
         <h2>Гурван алхмаар шатахуунтай</h2>
         <ol class="steps">
           <li><span class="k">01</span><div><h3>Төрлөө сонгоод нийлүүлэгчээ ол</h3><p>А-92, А-95, Евро-92, дизелийн аль нь хэрэгтэйг сонгоход ойрын нийлүүлэгчид үнэ, үлдэгдэл, зайтайгаа гарна.</p></div></li>
-          <li><span class="k">02</span><div><h3>Литрээ оруулаад QPay-р төл</h3><p>Литр нэмэх тусам дүн шууд бодогдоно. Хүргэх цэг, машины дугаараа бичээд, хүсвэл цаг товлоно.</p></div></li>
-          <li><span class="k">03</span><div><h3>Нийлүүлэгч тан руу очно</h3><p>Төлбөр орсны дараа нийлүүлэгчийн утас, одоогийн байршил, ойролцоо ирэх хугацаа харагдана. Шатахуунаа аваад “Хүлээн авлаа” дарна.</p></div></li>
+          <li><span class="k">02</span><div><h3>Литрээ оруулаад QPay-р төл</h3><p>Хүргэх цэг, машины дугаараа бичээд, хүсвэл цаг товлоно.</p></div></li>
+          <li><span class="k">03</span><div><h3>Нийлүүлэгч тань руу очно</h3><p>Төлбөр орсны дараа нийлүүлэгчийн утасны дугаар, одоогийн байршил, ойролцоо ирэх хугацаа харагдана. Шатахуунаа аваад “Хүлээн авлаа” дарна.</p></div></li>
         </ol>
       </div>
     </div>
@@ -428,19 +464,26 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 </main>
 
 <footer id="holboo">
+  <div class="wrap sign rv">
+    <b class="sign-w" aria-hidden="true">ШАГ</b>
+    <p class="sign-t">Түгжрэлд цаг үрэлгүй шуурхай шатахуун захиал.<span>shagiinbenzin.mn · 24/7</span></p>
+  </div>
   <div class="wrap foot">
-    <div>
-      <a class="brand" href="#" aria-label="Шаг"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.5C9.9 2.5 5 7.3 5 13.3 5 21.2 16 29.5 16 29.5s11-8.3 11-16.2C27 7.3 22.1 2.5 16 2.5z" fill="#FFB02E"/><path d="M16 7.6s-4.2 4.6-4.2 7.4a4.2 4.2 0 0 0 8.4 0c0-2.8-4.2-7.4-4.2-7.4z" fill="#0A0F14"/></svg><span><b>ШАГ</b><small>шатахуун хүргэлт</small></span></a>
-      <p class="muted" style="max-width:46ch;margin-top:16px">Бензин, дизелийг таны байгаа газарт хүргэх нийлүүлэгчдийн нэгдсэн платформ. 24/7 ажиллана. Санал, гомдлоо энд үлдээвэл админ шууд хүлээн авна.</p>
-      <p class="mono small muted" style="margin-top:16px">shagiinbenzin.mn</p>
+    <div class="rv">
+      <h2 style="font-size:clamp(24px,2.4vw,32px)">Санал хүсэлт</h2>
+      <p class="muted" style="max-width:46ch;margin-top:12px">Бензин, дизелийг таны байгаа газарт хүргэх нийлүүлэгчдийн нэгдсэн платформ. Санал, гомдол, админтай холбогдох хүсэлтээ энд үлдээвэл админ 24/7 хүлээн авна.</p>
     </div>
-    <form class="form" id="fbForm" novalidate>
-      <div class="eyebrow">Санал хүсэлт · админтай холбогдох</div>
-      <div class="two">
-        <label class="inp">Төрөл<select id="fbType"><option>Санал</option><option>Гомдол</option><option>Админтай холбогдох</option></select></label>
-        <label class="inp">Утас (заавал биш)<input id="fbPhone" type="tel" inputmode="numeric" maxlength="8" placeholder="8 оронтой"></label>
+    <form class="form rv" style="--i:1" id="fbForm" novalidate>
+      <div class="seg3" role="radiogroup" aria-label="Төрөл">
+        <label><input type="radio" name="fbType" value="Санал" checked><span>Санал</span></label>
+        <label><input type="radio" name="fbType" value="Гомдол"><span>Гомдол</span></label>
+        <label><input type="radio" name="fbType" value="Админтай холбогдох"><span>Админтай холбогдох</span></label>
       </div>
-      <label class="inp">Мессеж<textarea id="fbMsg" placeholder="Захиалгын дугаартай бол бичнэ үү"></textarea></label>
+      <div class="two">
+        <label class="inp">Утасны дугаар (заавал биш)<input id="fbPhone" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" placeholder="8 оронтой"></label>
+        <label class="inp">Захиалгын дугаар (заавал биш)<input id="fbOrder" inputmode="numeric" maxlength="20" placeholder="жишээ нь 10025"></label>
+      </div>
+      <label class="inp">Мессеж<textarea id="fbMsg" placeholder="Юу болсныг товч бичнэ үү"></textarea></label>
       <div><button class="btn btn-primary" type="submit">Илгээх</button></div>
     </form>
   </div>
@@ -459,6 +502,13 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 <script src="vendor/supabase.js"></script>
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="app.js?v=1"></script>
+<script>
+/* Гүйлгэхэд гарч ирэх хөдөлгөөн: скрипт ажиллахгүй эсвэл хөдөлгөөн багасгасан үед агуулга шууд харагдана */
+(function(){var d=document.documentElement;if(!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+d.classList.add('js-rv');var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -8% 0px',threshold:.08});
+document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});setTimeout(function(){document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in')})},6000);
+setTimeout(function(){var b=document.getElementById('pylonRows');if(b)b.classList.remove('boot')},3500)})();
+</script>
+<script src="app.js?v=2"></script>
 </body>
 </html>
