@@ -104,7 +104,7 @@ function renderHeader() {
   $('#loginBtn').hidden = on; $('#userChip').hidden = !on;
   if (on) $('#userName').textContent = (p && (p.display_name || p.username || p.email)) || S.session.user.email || 'Хэрэглэгч';
   $('[data-nav="minii"]').hidden = !on;
-  $('[data-nav="niiluulegch"]').hidden = !(p && p.role === 'supplier');
+  const sn = $('[data-nav="niiluulegch"]'); sn.hidden = !(p && (p.role === 'supplier' || p.role === 'admin')); sn.textContent = p && p.role === 'admin' ? 'Миний зар' : 'Нийлүүлэгч';
   $('[data-nav="admin"]').hidden = !(p && p.role === 'admin');
 }
 $('#loginBtn').onclick = () => openAuth();
@@ -423,17 +423,35 @@ function gate(root, msg, withLogin) { root.innerHTML = `<div class="gate"><p cla
 async function renderSupplier() {
   const root = $('#supRoot');
   if (!S.session) return gate(root, 'Нийлүүлэгчийн самбарт нэвтэрнэ үү.', true);
-  if (!S.profile || S.profile.role !== 'supplier') return gate(root, 'Нийлүүлэгчийн эрхийг админ олгоно. Админтай холбогдоно уу.');
+  if (!S.profile || !['supplier', 'admin'].includes(S.profile.role)) return gate(root, 'Нийлүүлэгчийн эрхийг админ олгоно. Админтай холбогдоно уу.');
+  const pr = S.profile, isAdm = pr.role === 'admin';
   root.innerHTML = `
-    <div class="panel-head"><div><div class="eyebrow">Нийлүүлэгчийн самбар</div><h1>${esc(S.profile.display_name || 'Нийлүүлэгч')}</h1></div>
+    <div class="panel-head"><div><div class="eyebrow">${isAdm ? 'Админ · миний зар, хүргэлт' : 'Нийлүүлэгчийн самбар'}</div><h1>${esc(pr.display_name || 'Нийлүүлэгч')}</h1></div>
       <div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn btn-ghost btn-sm" type="button" id="sndBtn"></button><button class="btn btn-ghost btn-sm" type="button" id="geoBtn"></button></div></div>
     <p class="muted small" id="geoTxt" style="margin:6px 0 0"></p>
+    <form class="${pr.phone ? 'note' : 'note warn'}" id="pf" novalidate style="margin-top:14px;display:grid;gap:10px">
+      ${pr.phone ? `<div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between"><span>Захиалагч төлбөр төлсний дараа харагдах: <b>${esc(pr.display_name || '—')}</b> · <b class="mono">${phoneFmt(pr.phone)}</b></span><button class="btn btn-ghost btn-sm" type="button" id="pfEdit">Засах</button></div>` : '<b>Зар нийтлэхийн өмнө захиалагчид харагдах нэр, утасны дугаараа оруулна уу.</b>'}
+      <div class="grid2" id="pfBox"${pr.phone ? ' hidden' : ''}>
+        <label class="inp">Захиалагчид харагдах нэр<input id="pfName" maxlength="60" value="${esc(pr.display_name || '')}" placeholder="жишээ нь Шаг хүргэлт"></label>
+        <label class="inp">Утасны дугаар<input id="pfPhone" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" value="${esc(pr.phone || '')}" placeholder="99xxxxxx"></label>
+        <div class="full"><button class="btn btn-primary btn-sm" type="submit" id="pfGo">Хадгалах</button></div>
+      </div>
+    </form>
     <div class="kpis" id="supK"></div>
     <div class="cols">
       <div class="box"><div class="box-h"><h3>Ирсэн захиалгууд</h3><span class="muted small">Төлбөр орсон захиалга л харагдана</span></div><div class="olist" id="supO"></div></div>
       <div class="box"><div class="box-h"><h3>Миний зарууд</h3><span class="muted small" id="supLc"></span></div><div id="supL"></div>
         <form class="box-b grid2" id="lf" novalidate style="border-top:1px solid var(--line)"></form></div>
     </div><div style="height:70px"></div>`;
+  const pe = $('#pfEdit'); if (pe) pe.onclick = () => { $('#pfBox').hidden = !$('#pfBox').hidden; };
+  $('#pf').onsubmit = async (e) => {
+    e.preventDefault(); const b = $('#pfGo'), ph = $('#pfPhone').value.replace(/\D/g, ''), nm = $('#pfName').value.trim();
+    if (nm.length < 2) { $('#pfName').focus(); return toast('Нэрээ бичнэ үү', true); }
+    if (!/^[5-9]\d{7}$/.test(ph)) { $('#pfPhone').focus(); return toast('Утасны дугаар 8 оронтой', true); }
+    busy(b, true);
+    try { await rpc('update_my_profile', { p_name: nm, p_phone: ph }); await loadProfile(); renderHeader(); toast('Хадгалагдлаа'); renderSupplier(); }
+    catch (err) { toast(nice(err), true); busy(b, false); }
+  };
   $('#sndBtn').onclick = () => { SUP.sound = !SUP.sound; store.set('shag_sound', SUP.sound); if (SUP.sound) beep(); drawTools(); };
   $('#geoBtn').onclick = () => { if (SUP.watch != null) stopWatch(); else startWatch(); drawTools(); };
   drawTools();
@@ -478,7 +496,7 @@ function drawSupplier(freshIds) {
     ['Явцад', SUP.orders.filter((o) => ['accepted', 'enroute', 'delivered'].includes(o.status)).length, 'хүлээн авсан → хүргэгдсэн', ''],
     ['Өнөөдөр зарсан', fmt(td.reduce((a, o) => a + o.liters, 0)) + ' л', td.length + ' захиалга', ''],
     ['Өнөөдрийн борлуулалт', money(td.reduce((a, o) => a + o.total, 0)), 'төлөгдсөн захиалга', ''],
-    ['Идэвхтэй зар', SUP.listings.filter((l) => l.status === 'active').length, 'хязгаар ' + (S.profile.max_listings ?? '—'), ''],
+    ['Идэвхтэй зар', SUP.listings.filter((l) => l.status === 'active').length, S.profile.role === 'admin' ? 'хязгааргүй' : 'хязгаар ' + (S.profile.max_listings ?? '—'), ''],
   ].map((k) => `<div class="kpi ${k[3]}"><span>${k[0]}</span><b>${k[1]}</b><small>${k[2]}</small></div>`).join('');
   const NEXT = { new: ['accepted', 'Хүлээн авах'], accepted: ['enroute', 'Замд гарлаа'], enroute: ['delivered', 'Хүргэгдсэн'] };
   $('#supO').innerHTML = SUP.orders.length ? SUP.orders.map((o) => {
@@ -496,7 +514,7 @@ function drawSupplier(freshIds) {
   }).join('') : '<div class="empty" style="border:0">Төлөгдсөн захиалга одоогоор алга. Шинэ захиалга ирэхэд энд гарч дуут дохио өгнө.</div>';
   $$('#supO [data-st]').forEach((b) => (b.onclick = async () => { busy(b, true); try { const r = await rpc('supplier_set_status', { p_order: b.dataset.id, p_status: b.dataset.st }); toast(ST[r] || ST[b.dataset.st]); await loadSupplier(); } catch (err) { toast(nice(err), true); busy(b, false); } }));
   const act = SUP.listings.filter((l) => l.status !== 'finished').length;
-  $('#supLc').textContent = `${act} / ${S.profile.max_listings ?? '—'} зар`;
+  $('#supLc').textContent = S.profile.role === 'admin' ? `${act} зар` : `${act} / ${S.profile.max_listings ?? '—'} зар`;
   $('#supL').innerHTML = SUP.listings.length ? SUP.listings.map((l) => `<div class="my"><div class="my1"><span class="chip" style="--c:${fl(l.fuel).c}">${fl(l.fuel).l}</span><b class="mono">${money(l.price)}</b><span class="mono muted small">${fmt(l.avail_l)} / ${fmt(l.total_l)} л</span><span class="pill p-${l.status}">${{ active: 'Идэвхтэй', paused: 'Түр зогссон', finished: 'Дууссан' }[l.status]}</span></div>
       <div class="muted small">${esc(l.place || 'Одоогийн газар бичээгүй')} · ${ago(l.loc_at)} · Нийтэлсэн ${fmtDT(l.created_at)}</div>
       <div class="o3"><select class="isel" data-ls="${l.id}" aria-label="Зарын төлөв"><option value="active"${l.status === 'active' ? ' selected' : ''}>Идэвхтэй</option><option value="paused"${l.status === 'paused' ? ' selected' : ''}>Түр зогссон</option><option value="finished"${l.status === 'finished' ? ' selected' : ''}>Дууссан</option></select><button class="btn btn-ghost btn-sm" type="button" data-edit="${l.id}">Засах</button></div></div>`).join('') : '<div class="empty" style="border:0">Зар алга. Доорх маягтаар эхний зараа нэмнэ үү.</div>';
