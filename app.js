@@ -165,11 +165,11 @@ async function loadListings() {
   renderPylon(); renderFuels(); if (S.fuel) renderBoard();
 }
 function stats() {
-  return Object.keys(FUELS).map((k) => { const ps = S.listings.filter((l) => l.fuel === k).map((l) => l.price); return { k, min: ps.length ? Math.min(...ps) : null, n: ps.length }; });
+  return Object.keys(FUELS).map((k) => { const ps = S.listings.filter((l) => l.fuel === k).map((l) => l.price); const lit = S.listings.filter((l) => l.fuel === k).reduce((a, l) => a + (l.avail_l || 0), 0); return { k, min: ps.length ? Math.min(...ps) : null, n: ps.length, lit }; });
 }
 let pylonOnce = false;
 function renderPylon() {
-  $('#pylonRows').innerHTML = stats().map((r, i) => `<button type="button" class="prow" data-f="${r.k}" style="--c:${fl(r.k).c};--i:${i}"><span class="ftag">${fl(r.k).l}</span><span class="led"><span class="ghost">8,888</span><span class="val" data-min="${r.min || 0}">${r.min ? fmt(r.min) : '—'}</span></span><em>${r.n} зар</em></button>`).join('');
+  $('#pylonRows').innerHTML = stats().map((r, i) => `<button type="button" class="prow" data-f="${r.k}" style="--c:${fl(r.k).c};--i:${i}"><span class="ftag">${fl(r.k).l}<small>${r.lit ? fmt(r.lit) + ' л нөөц' : 'нөөц —'}</small></span><span class="led"><span class="ghost">8,888</span><span class="val" data-min="${r.min || 0}">${r.min ? fmt(r.min) : '—'}</span></span><em>${r.n} зар</em></button>`).join('');
   const total = S.listings.length;
   $('#pylonLive').textContent = total ? total + ' идэвхтэй зар' : 'одоогоор зар алга';
   $('#pylonTime').textContent = fmtT(new Date().toISOString()) + ' шинэчлэгдсэн';
@@ -177,7 +177,7 @@ function renderPylon() {
   if (!pylonOnce && !RM) { pylonOnce = true; $$('#pylonRows .val').forEach((el, i) => { const m = +el.dataset.min; if (!m) return; const t0 = performance.now() + i * 140, from = m - 600; const step = (t) => { const k = Math.max(0, Math.min(1, (t - t0) / 1000)), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(from + (m - from) * e); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }); }
 }
 function renderFuels() {
-  $('#fuels').innerHTML = stats().map((r) => `<button type="button" class="fuel" data-f="${r.k}" aria-pressed="${S.fuel === r.k}" style="--c:${fl(r.k).c}"><b>${fl(r.k).l}</b><span class="p">${r.min ? money(r.min) + '-өөс' : '—'}</span><small>${r.n ? r.n + ' нийлүүлэгч' : 'Одоогоор зар алга'}</small></button>`).join('');
+  $('#fuels').innerHTML = stats().map((r) => `<button type="button" class="fuel" data-f="${r.k}" aria-pressed="${S.fuel === r.k}" style="--c:${fl(r.k).c}"><b>${fl(r.k).l}</b><span class="p">${r.min ? money(r.min) + '-өөс' : '—'}</span>${r.n ? `<span class="stk"><b>${fmt(r.lit)} л</b> нийт нөөц</span>` : ''}<small>${r.n ? r.n + ' нийлүүлэгч' : 'Одоогоор зар алга'}</small></button>`).join('');
   $$('#fuels .fuel').forEach((b) => (b.onclick = () => selectFuel(b.dataset.f)));
   if (S.profile && S.profile.role === 'supplier' && !$('#supNote')) $('#fuels').insertAdjacentHTML('afterend', '<p class="note" id="supNote">Нийлүүлэгчийн эрхээр нэвтэрсэн тул зөвхөн өөрийн зар харагдана.</p>');
 }

@@ -102,12 +102,13 @@ h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-sp
 .pylon-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line-2);padding-bottom:10px;margin-bottom:6px}
 .pylon-head b{font-family:var(--display);text-transform:uppercase;letter-spacing:.12em;font-size:13px;font-weight:600}
 .pylon-head span{font-family:var(--mono);font-size:11px;color:var(--fog)}
-.prow{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(36,52,66,.7);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;transition:background .15s}
+.prow{display:grid;grid-template-columns:112px 1fr auto;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(36,52,66,.7);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;transition:background .15s}
 .prow:hover{background:rgba(255,176,46,.05)}
 .boot .prow{animation:ledon .6s steps(3,end) both;animation-delay:calc(1s + var(--i,0) * 130ms)}
 @keyframes ledon{0%{opacity:0}40%{opacity:.6}60%{opacity:.25}100%{opacity:1}}
 .prow:last-of-type{border-bottom:0}
 .ftag{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.04em;text-transform:uppercase;padding:5px 0 5px 10px;border-left:3px solid var(--c)}
+.ftag small{display:block;font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:0;text-transform:none;color:var(--fog);margin-top:3px;white-space:nowrap}
 .led{position:relative;justify-self:end;font-family:var(--mono);font-weight:700;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
 .led .ghost{color:rgba(255,176,46,.07)}
 .led .val{position:absolute;inset:0;text-align:right;color:var(--sodium);text-shadow:0 0 14px rgba(255,176,46,.55),0 0 2px rgba(255,200,120,.8)}
@@ -127,6 +128,8 @@ section.band{padding-block:64px}
 .fuel b{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .fuel .p{font-family:var(--mono);font-weight:700;color:var(--sodium);font-size:18px}
 .fuel small{color:var(--fog);font-size:12.5px}
+.fuel .stk{font-size:13px;color:var(--fog)}
+.fuel .stk b{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:0;text-transform:none;color:var(--frost)}
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--night);border:1px solid var(--line);border-radius:var(--r);padding:10px;margin-bottom:14px}
 .fld{display:flex;align-items:center;gap:8px;background:var(--raise);border:1px solid var(--line);border-radius:999px;padding:0 12px;min-height:38px;font-size:13px}
 .fld select,.fld input{background:none;border:0;outline:none;padding:6px 0;font-size:13px;font-weight:600;min-width:0}
@@ -512,6 +515,6 @@ d.classList.add('js-rv');var io=new IntersectionObserver(function(es){es.forEach
 document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});setTimeout(function(){document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in')})},6000);
 setTimeout(function(){var b=document.getElementById('pylonRows');if(b)b.classList.remove('boot')},3500)})();
 </script>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>
