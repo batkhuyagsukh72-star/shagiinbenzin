@@ -81,11 +81,11 @@ h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-sp
 @keyframes push{from{transform:scale(1.08)}to{transform:scale(1)}}
 .hero-media::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,11,15,.86) 0%,rgba(7,11,15,.5) 45%,rgba(7,11,15,.12) 100%),linear-gradient(180deg,rgba(7,11,15,.55) 0%,rgba(7,11,15,.1) 22%,rgba(7,11,15,.38) 48%,rgba(10,15,20,.9) 82%,var(--asphalt) 100%)}
 .hero-in{width:100%;padding-block:120px 56px}
-.hero-h{font-family:var(--display);font-weight:700;font-size:clamp(40px,7vw,100px);line-height:.98;letter-spacing:-.01em;margin:16px 0 0;text-wrap:initial}
+.hero-h{font-family:var(--display);font-weight:700;font-size:clamp(44px,9.4vw,136px);line-height:.95;letter-spacing:-.015em;margin:16px 0 0;text-wrap:initial}
 .hero-h .w{display:inline-block;overflow:hidden;vertical-align:top;padding:.16em .03em .1em;margin:-.16em -.03em -.1em}
-.hero-h .w>span{display:inline-block;animation:wordup .95s cubic-bezier(.2,.75,.15,1) both;animation-delay:calc(.12s + var(--i,0) * 75ms)}
+.hero-h .w>span{display:inline-block;animation:wordup 1s cubic-bezier(.2,.75,.15,1) both;animation-delay:calc(.12s + var(--i,0) * 110ms)}
 @keyframes wordup{from{transform:translateY(112%)}to{transform:none}}
-.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:48px;align-items:end;margin-top:30px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:48px;align-items:end;margin-top:40px}
 .hero-grid>div:first-child{align-self:start;padding-top:6px}
 .fx{animation:fadeup .8s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(.6s + var(--i,0) * 90ms)}
 @keyframes fadeup{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
@@ -359,8 +359,7 @@ footer.app .sign{display:none}
   .two,.grid2{grid-template-columns:1fr}
   .qr-wrap{grid-template-columns:1fr;justify-items:center;text-align:center}
   .banks{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .hero-h{font-size:clamp(38px,11vw,52px)}
-  .hero-h br{display:none}
+  .hero-h{font-size:clamp(52px,15vw,72px)}
   .led{font-size:28px}
   .user-chip{max-width:170px}
 }
@@ -393,7 +392,7 @@ footer.app .sign{display:none}
     <div class="hero-media"><video id="hvid" autoplay muted loop playsinline preload="auto" poster="a/hero.jpg" aria-hidden="true"><source src="a/hero.mp4" type="video/mp4"></video></div>
     <div class="wrap hero-in">
       <div class="eyebrow fx" style="--i:-6">Улаанбаатар · бензин, дизель хүргэлт · 24/7</div>
-      <h1 class="hero-h"><span class="w"><span style="--i:0">Түгжрэлд</span></span> <span class="w"><span style="--i:1">цаг</span></span> <span class="w"><span style="--i:2">үрэлгүй</span></span><br> <span class="w"><span style="--i:3">шуурхай</span></span> <span class="w"><span style="--i:4">шатахуун</span></span> <span class="w"><span style="--i:5">захиал</span></span></h1>
+      <h1 class="hero-h"><span class="w"><span style="--i:0">Шуурхай</span></span> <span class="w"><span style="--i:1">шатахуун</span></span></h1>
       <div class="hero-grid">
         <div>
           <p class="sub fx" style="--i:0">Шатахууны төрлөө сонгоод ойрын нийлүүлэгчийг газрын зураг дээрээс харна уу. QPay-р төлсний дараа нийлүүлэгч бензин, дизелийг таны байгаа газарт үнэгүй хүргэнэ.</p>
@@ -509,6 +508,6 @@ d.classList.add('js-rv');var io=new IntersectionObserver(function(es){es.forEach
 document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});setTimeout(function(){document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in')})},6000);
 setTimeout(function(){var b=document.getElementById('pylonRows');if(b)b.classList.remove('boot')},3500)})();
 </script>
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
