@@ -824,7 +824,7 @@ function route() {
   ['home', 'minii', 'niiluulegch', 'admin', 'doc'].forEach((k) => ($('#v-' + k).hidden = k !== v));
   $('#holboo').classList.toggle('app', v !== 'home' && v !== 'doc');
   $$('.nav a').forEach((a) => a.setAttribute('aria-current', a.dataset.nav === v ? 'page' : 'false'));
-  const vid = $('#hvid'); if (vid) { if (v === 'home' && !RM) vid.play().catch(() => {}); else vid.pause(); }
+  if (v === 'home') heroPlay(); else if (HV.el) HV.el.pause();
   if (v === 'minii') renderMyOrders();
   if (v === 'niiluulegch') renderSupplier();
   if (v === 'admin') renderAdmin();
@@ -835,6 +835,14 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 $('#ctaOrder').onclick = (e) => { e.preventDefault(); if (location.hash !== '#zahialah') location.hash = 'zahialah'; else route(); };
+
+const HV = { el: $('#hvid'), wrap: $('.hero-media') };
+function heroPlay() {
+  const v = HV.el; if (!v) return;
+  if (RM) { v.pause(); HV.wrap.classList.add('novid'); return; }
+  v.muted = true; v.defaultMuted = true;
+  try { const p = v.play(); if (p && p.then) p.then(() => HV.wrap.classList.remove('novid'), () => HV.wrap.classList.add('novid')); } catch { HV.wrap.classList.add('novid'); }
+}
 
 async function loadSettings() { try { const s = await rpc('public_settings'); if (s) S.settings = s; } catch { /* анхдагч */ } }
 
@@ -851,5 +859,13 @@ sb.auth.onAuthStateChange((ev, session) => {
 });
 loadSettings(); loadListings();
 sb.channel('listings-pub').on('postgres_changes', { event: '*', schema: 'public', table: 'listings' }, () => { clearTimeout(S.lt); S.lt = setTimeout(loadListings, 1500); }).subscribe();
-if (RM) { const v = $('#hvid'); if (v) { v.removeAttribute('autoplay'); v.pause(); } }
+/* Hero видео: iPhone-ийн Low Power Mode, зарим апп доторх хөтөч автоматаар тоглуулахыг хаадаг.
+   Тэр үед тоглуулах товч гаргахгүй, зургийг удаан томруулж харуулаад, эхний хүрэлтээр видеог эхлүүлнэ. */
+if (HV.el) {
+  if (RM) { HV.el.removeAttribute('autoplay'); HV.el.pause(); HV.wrap.classList.add('novid'); }
+  HV.el.addEventListener('playing', () => HV.wrap.classList.remove('novid'));
+  setTimeout(() => { if (HV.el.paused && S.view === 'home') HV.wrap.classList.add('novid'); }, 2500);
+  const retry = () => { if (S.view === 'home' && HV.el.paused && !RM) heroPlay(); };
+  ['touchend', 'click', 'keydown'].forEach((ev) => document.addEventListener(ev, retry, { passive: true }));
+}
 })();

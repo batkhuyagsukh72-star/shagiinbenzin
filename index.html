@@ -79,6 +79,10 @@ h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-sp
 .hero-media{position:absolute;inset:0;z-index:-1;background:#06090c url("a/hero.jpg") center/cover no-repeat}
 .hero-media video{width:100%;height:100%;object-fit:cover;object-position:50% 55%;animation:push 18s ease-in-out infinite alternate;transform-origin:50% 45%}
 @keyframes push{from{transform:scale(1.08)}to{transform:scale(1)}}
+.hero-media video{pointer-events:none}
+.hero-media video::-webkit-media-controls,.hero-media video::-webkit-media-controls-panel,.hero-media video::-webkit-media-controls-start-playback-button,.hero-media video::-webkit-media-controls-overlay-play-button{display:none!important;-webkit-appearance:none;opacity:0!important}
+.hero-media.novid video{visibility:hidden}
+.hero-media.novid{animation:push 22s ease-in-out infinite alternate;transform-origin:50% 45%}
 .hero-media::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,11,15,.86) 0%,rgba(7,11,15,.5) 45%,rgba(7,11,15,.12) 100%),linear-gradient(180deg,rgba(7,11,15,.55) 0%,rgba(7,11,15,.1) 22%,rgba(7,11,15,.38) 48%,rgba(10,15,20,.9) 82%,var(--asphalt) 100%)}
 .hero-in{width:100%;padding-block:120px 56px}
 .hero-h{font-family:var(--display);font-weight:700;font-size:clamp(44px,9.4vw,136px);line-height:.95;letter-spacing:-.015em;margin:16px 0 0;text-wrap:initial}
@@ -390,7 +394,7 @@ footer.app .sign{display:none}
 <main>
 <div id="v-home">
   <section class="hero" aria-label="Нүүр">
-    <div class="hero-media"><video id="hvid" autoplay muted loop playsinline preload="auto" poster="a/hero.jpg" aria-hidden="true"><source src="a/hero.mp4" type="video/mp4"></video></div>
+    <div class="hero-media"><video id="hvid" autoplay muted loop playsinline webkit-playsinline disablepictureinpicture disableremoteplayback preload="auto" poster="a/hero.jpg" aria-hidden="true" tabindex="-1"><source src="a/hero.mp4" type="video/mp4"></video></div>
     <div class="wrap hero-in">
       <div class="eyebrow fx" style="--i:-6">Улаанбаатар · бензин, дизель хүргэлт · 24/7</div>
       <h1 class="hero-h"><span class="w"><span style="--i:0">Шуурхай</span></span> <span class="w"><span style="--i:1">шатахуун</span></span></h1>
@@ -508,6 +512,6 @@ d.classList.add('js-rv');var io=new IntersectionObserver(function(es){es.forEach
 document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});setTimeout(function(){document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in')})},6000);
 setTimeout(function(){var b=document.getElementById('pylonRows');if(b)b.classList.remove('boot')},3500)})();
 </script>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
