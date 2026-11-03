@@ -14,6 +14,9 @@ const FLOW = ['new', 'accepted', 'enroute', 'delivered', 'confirmed'];
 const UB = [47.9185, 106.9176];
 const PAY = { cash: 'Бэлнээр (хүргэлтийн үед)', transfer: 'Дансаар шилжүүлсэн', qpay_out: 'QPay-р (сайтаас гадуур)', later: 'Дараа тооцоо хийнэ' };
 const PAY_S = { cash: 'бэлэн', transfer: 'данс', qpay_out: 'QPay гадуур', later: 'дараа тооцоо' };
+const BANKS = ['Хаан банк', 'Голомт банк', 'Худалдаа хөгжлийн банк', 'Хас банк', 'Төрийн банк', 'Капитрон банк', 'Богд банк', 'Ариг банк', 'М банк', 'Транс банк', 'Чингис хаан банк', 'Үндэсний хөрөнгө оруулалтын банк'];
+const UA = navigator.userAgent || '';
+const INAPP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\/|Viber|KAKAOTALK|Snapchat|TikTok|musical_ly|BytedanceWebview|Twitter|; wv\)/i.test(UA) || (/iPhone|iPad|iPod/.test(UA) && !/Safari\//.test(UA));
 const DEFAULT_IMG = 'a/tanker-dawn.jpg';
 
 /* ================= Туслах ================= */
@@ -104,17 +107,20 @@ function renderHeader() {
   $('#loginBtn').hidden = on; $('#userChip').hidden = !on;
   if (on) $('#userName').textContent = (p && (p.display_name || p.username || p.email)) || S.session.user.email || 'Хэрэглэгч';
   $('[data-nav="minii"]').hidden = !on;
-  const sn = $('[data-nav="niiluulegch"]'); sn.hidden = !(p && (p.role === 'supplier' || p.role === 'admin')); sn.textContent = p && p.role === 'admin' ? 'Миний зар' : 'Нийлүүлэгч';
+  const sn = $('[data-nav="niiluulegch"]'); sn.hidden = !(p && (p.role === 'supplier' || p.role === 'admin' || p.supplier_request === 'pending')); sn.textContent = p && p.role === 'admin' ? 'Миний зар' : 'Нийлүүлэгч';
   $('[data-nav="admin"]').hidden = !(p && p.role === 'admin');
 }
 $('#loginBtn').onclick = () => openAuth();
 $('#logoutBtn').onclick = async () => { await sb.auth.signOut(); toast('Гарлаа'); location.hash = ''; };
 
-function openAuth(after, mode) {
+function openAuth(after, mode, intent) {
+  if (!after && !intent) return chooseRole(mode);
   let tab = mode || 'login';
+  const sup = intent === 'supplier';
   const draw = () => {
-    openModal(tab === 'login' ? 'Нэвтрэх' : 'Бүртгүүлэх', `
-      <button class="btn btn-google" type="button" id="gBtn"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>Google-ээр ${tab === 'login' ? 'нэвтрэх' : 'бүртгүүлэх'}</button>
+    openModal(sup ? (tab === 'login' ? 'Нийлүүлэгчээр нэвтрэх' : 'Нийлүүлэгчээр бүртгүүлэх') : (tab === 'login' ? 'Нэвтрэх' : 'Бүртгүүлэх'), `
+      ${authNotes(intent)}<button class="btn btn-google" type="button" id="gBtn"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>Google-ээр ${tab === 'login' ? 'нэвтрэх' : 'бүртгүүлэх'}</button>
+      <button type="button" class="linkbtn" id="gHelp">Google-ээр нэвтрэх ажиллахгүй байна уу? Хөтчөөр нээх заавар</button>
       <div class="divider">эсвэл нэр, ПИН кодоор</div>
       <div class="seg2" role="group" aria-label="Нэвтрэх эсвэл бүртгүүлэх"><button type="button" data-t="login" aria-pressed="${tab === 'login'}">Нэвтрэх</button><button type="button" data-t="signup" aria-pressed="${tab === 'signup'}">Шинээр бүртгүүлэх</button></div>
       <form id="authForm" class="form" novalidate>
@@ -128,8 +134,11 @@ function openAuth(after, mode) {
         ${tab === 'login' ? '<p class="muted small" style="margin:0">ПИН кодоо мартсан бол доорх “Админтай холбогдох” хэсгээр хандана уу.</p>' : ''}
       </form>`);
     $$('#mBody .seg2 button').forEach((b) => (b.onclick = () => { tab = b.dataset.t; draw(); }));
+    $('#gHelp').onclick = () => browserGuide();
+    const bk = $('#authBack'); if (bk) bk.onclick = () => chooseRole(mode);
     $('#gBtn').onclick = async () => {
       if (after) store.set('shag_after', 'resume');
+      store.set('shag_intent', intent || null);
       const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
       if (error) toast(nice(error), true);
     };
@@ -148,6 +157,7 @@ function openAuth(after, mode) {
           if (!$('#aOk').checked) throw new Error('Нөхцөлийг зөвшөөрнө үү');
           await fn('pin-auth', { action: 'signup', username: user, pin, name, phone });
         }
+        store.set('shag_intent', intent || null);
         const { error } = await sb.auth.signInWithPassword({ email: await pinEmail(user), password: pin });
         if (error) throw error;
         closeModal();
@@ -158,11 +168,54 @@ function openAuth(after, mode) {
   };
   draw();
 }
+function authNotes(intent) {
+  let h = '';
+  if (intent === 'supplier') h += '<div class="note">Нийлүүлэгчээр нэвтэрч байна. Анх удаа бол бүртгүүлээд нийлүүлэгч болох хүсэлтээ илгээнэ. Админ баталсны дараа зар нийтэлнэ. <button type="button" class="linkbtn" id="authBack">← Буцах</button></div>';
+  else if (intent === 'customer') h += '<div class="note">Хэрэглэгчээр нэвтэрч байна: бензин, дизель захиалж авна. <button type="button" class="linkbtn" id="authBack">← Буцах</button></div>';
+  if (INAPP) h += '<div class="note warn"><b>Та апп доторх хөтчөөр (Viber, Facebook г.м.) орсон байна.</b> Энд Google-ээр нэвтрэх ажиллахгүй байж магадгүй. Safari эсвэл Chrome-оор нээх, эсвэл доорх нэр, ПИН кодоор нэвтэрнэ үү.</div>';
+  return h;
+}
+function chooseRole(mode) {
+  openModal('Нэвтрэх', `
+    <p class="muted" style="margin:0">Та сайтыг юунд ашиглах вэ?</p>
+    <button type="button" class="role-opt" data-r="customer"><b>Хэрэглэгчээр нэвтрэх</b><span>Бензин, дизель захиалж авах</span></button>
+    <button type="button" class="role-opt" data-r="supplier"><b>Нийлүүлэгчээр нэвтрэх</b><span>Шатахуун нийлүүлж, зар тавих</span></button>
+    ${INAPP ? '<button type="button" class="linkbtn" id="rHelp">Апп доторх хөтөч дээр байна уу? Хөтчөөр нээх заавар</button>' : ''}`);
+  $$('#mBody .role-opt').forEach((b) => (b.onclick = () => (b.dataset.r === 'supplier' ? confirmSupplier(mode) : openAuth(null, mode, 'customer'))));
+  const h = $('#rHelp'); if (h) h.onclick = () => browserGuide();
+}
+function confirmSupplier(mode) {
+  openModal('Нийлүүлэгчээр нэвтрэх', `
+    <div class="note warn"><b>Та нийлүүлэгчээр нэвтрэх гэж байна.</b></div>
+    <p class="ask">Та бензин авах уу, эсвэл нийлүүлэх үү?</p>
+    <div class="two"><button class="btn btn-ghost" type="button" data-r="customer">Бензин авна</button><button class="btn btn-primary" type="button" data-r="supplier">Бензин нийлүүлнэ</button></div>
+    <p class="muted small" style="margin:0">Бензин авах бол хэрэглэгчээр нэвтэрнэ. Нийлүүлэх бол нийлүүлэгчээр бүртгүүлж, админ баталгаажуулна.</p>
+    <button class="linkbtn" type="button" id="cfBack">← Буцах</button>`);
+  $$('#mBody .two [data-r]').forEach((b) => (b.onclick = () => openAuth(null, mode, b.dataset.r)));
+  $('#cfBack').onclick = () => chooseRole(mode);
+}
+function browserGuide() {
+  const android = /Android/i.test(UA), link = location.origin + location.pathname;
+  openModal('Хөтчөөр нээх заавар', `
+    <p style="margin:0">Viber, Facebook, Messenger, Instagram доторх хөтөч Google-ээр нэвтрэхийг хориглодог. Сайтыг утасныхаа үндсэн хөтчөөр (Safari, Chrome) нээгээрэй.</p>
+    <ol class="guide">
+      <li><b>iPhone:</b> дэлгэцийн доод эсвэл дээд буланд байгаа <b>···</b> эсвэл <b>хуваалцах</b> товчийг дараад <b>“Safari-д нээх” (Open in Safari)</b>-г сонгоно.</li>
+      <li><b>Android:</b> баруун дээд буланд байгаа <b>⋮</b> товчийг дараад <b>“Chrome-д нээх” (Open in Chrome)</b> эсвэл <b>“Хөтчид нээх”</b>-г сонгоно.</li>
+      <li>Эсвэл доорх холбоосыг хуулж Safari, Chrome-д буулгана.</li>
+    </ol>
+    <div class="copyrow"><span class="mono">${esc(link.replace(/^https?:\/\//, ''))}</span><button class="btn btn-ok btn-sm" type="button" id="cpLink">Хуулах</button></div>
+    ${android ? `<a class="btn btn-primary" href="intent://${esc(location.host + location.pathname)}#Intent;scheme=https;package=com.android.chrome;end">Chrome-д шууд нээх</a>` : ''}
+    <p class="muted small" style="margin:0">Нэр, ПИН кодоор нэвтрэх нь апп доторх хөтөч дээр ч ажиллана.</p>`);
+  $('#cpLink').onclick = () => {
+    const done = () => toast('Холбоос хуулагдлаа. Safari эсвэл Chrome-д буулгана уу.');
+    try { navigator.clipboard.writeText(link).then(done, () => toast(link)); } catch { toast(link); }
+  };
+}
 
 /* ================= Нүүр: үнэ, төрөл, газрын зураг ================= */
 async function loadListings() {
   try { S.listings = (await rpc('list_listings', { p_fuel: null })) || []; } catch (e) { S.listings = []; console.error(e); }
-  renderPylon(); renderFuels(); if (S.fuel) renderBoard();
+  renderPylon(); renderFuels(); renderBoard();
 }
 function stats() {
   return Object.keys(FUELS).map((k) => { const ps = S.listings.filter((l) => l.fuel === k).map((l) => l.price); const lit = S.listings.filter((l) => l.fuel === k).reduce((a, l) => a + (l.avail_l || 0), 0); return { k, min: ps.length ? Math.min(...ps) : null, n: ps.length, lit }; });
@@ -173,26 +226,31 @@ function renderPylon() {
   const total = S.listings.length;
   $('#pylonLive').textContent = total ? total + ' идэвхтэй зар' : 'одоогоор зар алга';
   $('#pylonTime').textContent = fmtT(new Date().toISOString()) + ' шинэчлэгдсэн';
-  $$('#pylonRows .prow').forEach((b) => (b.onclick = () => { selectFuel(b.dataset.f); $('#zahialah').scrollIntoView({ behavior: RM ? 'auto' : 'smooth' }); }));
+  $$('#pylonRows .prow').forEach((b) => (b.onclick = () => selectFuel(b.dataset.f, true)));
   if (!pylonOnce && !RM) { pylonOnce = true; $$('#pylonRows .val').forEach((el, i) => { const m = +el.dataset.min; if (!m) return; const t0 = performance.now() + i * 140, from = m - 600; const step = (t) => { const k = Math.max(0, Math.min(1, (t - t0) / 1000)), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(from + (m - from) * e); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }); }
 }
+const SHORT = { A92: '92', A95: '95', E92: 'Е-92', DT: 'ДТ' };
 function renderFuels() {
-  $('#fuels').innerHTML = stats().map((r) => `<button type="button" class="fuel" data-f="${r.k}" aria-pressed="${S.fuel === r.k}" style="--c:${fl(r.k).c}"><b>${fl(r.k).l}</b><span class="p">${r.min ? money(r.min) + '-өөс' : '—'}</span>${r.n ? `<span class="stk"><b>${fmt(r.lit)} л</b> нийт нөөц</span>` : ''}<small>${r.n ? r.n + ' нийлүүлэгч' : 'Одоогоор зар алга'}</small></button>`).join('');
-  $$('#fuels .fuel').forEach((b) => (b.onclick = () => selectFuel(b.dataset.f)));
-  if (S.profile && S.profile.role === 'supplier' && !$('#supNote')) $('#fuels').insertAdjacentHTML('afterend', '<p class="note" id="supNote">Нийлүүлэгчийн эрхээр нэвтэрсэн тул зөвхөн өөрийн зар харагдана.</p>');
+  const st = stats();
+  $('#chips').innerHTML = `<button type="button" class="chipf" data-f="" aria-pressed="${!S.fuel}">Бүгд</button>` +
+    st.map((r) => `<button type="button" class="chipf" data-f="${r.k}" aria-pressed="${S.fuel === r.k}" style="--c:${fl(r.k).c}"><i></i>${SHORT[r.k]}${r.min ? `<small>${fmt(r.min)}₮</small>` : ''}</button>`).join('');
+  $$('#chips .chipf').forEach((b) => (b.onclick = () => selectFuel(b.dataset.f || null)));
+  if (S.profile && S.profile.role === 'supplier' && !$('#supNote')) $('#mapSum').insertAdjacentHTML('afterend', '<p class="note" id="supNote" style="margin-top:10px">Нийлүүлэгчийн эрхээр нэвтэрсэн тул зөвхөн өөрийн зар харагдана.</p>');
 }
-function selectFuel(f) {
-  S.fuel = f; S.sel = null; $('#boardWrap').hidden = false; renderFuels(); initMap();
+function selectFuel(f, scroll) {
+  S.fuel = f || null; S.sel = null; renderFuels(); initMap();
   const mp = $('#map'), ls = $('#list');
   if (!RM) { mp.classList.add('pop'); ls.classList.add('pop'); clearTimeout(S.popT); S.popT = setTimeout(() => { mp.classList.remove('pop'); ls.classList.remove('pop'); }, 1400); }
   renderBoard();
-  setTimeout(() => { S.map.invalidateSize(); fitMarkers(); }, 60);
-  if (innerWidth < 860) setTimeout(() => $('#boardWrap').scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' }), 120);
+  setTimeout(() => { if (S.map) { S.map.invalidateSize(); fitMarkers(); } }, 60);
+  if (scroll) setTimeout(() => $('#zahialah').scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' }), 60);
 }
 function initMap() {
   if (S.map) return;
   S.map = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView(UB, 12);
   tiles(S.map); S.layer = L.layerGroup().addTo(S.map);
+  if (store.get('shag_dark')) { $('#map').classList.add('dark'); $('#nightBtn').setAttribute('aria-pressed', 'true'); }
+  S.fitOnce = true;
   S.map.on('click', (e) => setYou(e.latlng.lat, e.latlng.lng, 'газрын зураг дээр заасан цэг'));
   S.map.on('focus', () => S.map.scrollWheelZoom.enable());
   if (S.you) placeYou();
@@ -204,11 +262,14 @@ function placeYou() {
   $('#youLabel').textContent = S.you.label || 'заасан цэг';
 }
 function setYou(lat, lng, label) { S.you = { lat, lng, label }; store.set('shag_you', S.you); placeYou(); renderBoard(); }
-$('#locBtn').onclick = async (e) => { const b = e.currentTarget; busy(b, true); try { const p = await geo(); setYou(p.lat, p.lng, 'таны одоогийн байршил'); S.map.setView([p.lat, p.lng], 14); } catch (err) { toast(nice(err), true); } finally { busy(b, false); } };
+$('#locBtn').onclick = async (e) => { const b = e.currentTarget; busy(b, true); try { initMap(); const p = await geo(); S.sort = 'dist'; $('#sortSel').value = 'dist'; setYou(p.lat, p.lng, 'таны одоогийн байршил'); S.map.setView([p.lat, p.lng], 14); } catch (err) { toast(nice(err), true); } finally { busy(b, false); } };
+$('#nightBtn').onclick = (e) => { const on = !$('#map').classList.contains('dark'); $('#map').classList.toggle('dark', on); e.currentTarget.setAttribute('aria-pressed', String(on)); store.set('shag_dark', on); };
+/* Газрын зургийг хэсэг рүү ойртоход ачаална */
+(() => { const m = $('#map'); if (!('IntersectionObserver' in window)) { initMap(); return; } const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { io.disconnect(); initMap(); renderBoard(); } }, { rootMargin: '400px 0px' }); io.observe(m); })();
 $('#sortSel').onchange = (e) => { S.sort = e.target.value; renderBoard(); };
 $('#q').oninput = (e) => { S.q = e.target.value.trim().toLocaleLowerCase('mn'); renderBoard(); };
 function visible() {
-  let v = S.listings.filter((l) => l.fuel === S.fuel);
+  let v = S.fuel ? S.listings.filter((l) => l.fuel === S.fuel) : S.listings.slice();
   if (S.q) v = v.filter((l) => [l.supplier_name, l.base_district, l.base_khoroo, l.base_org, l.place].join(' ').toLocaleLowerCase('mn').includes(S.q));
   const d = (l) => { const k = km(S.you, l); return k == null ? 1e9 : k; };
   v.sort((a, b) => (S.sort === 'price' ? a.price - b.price : S.sort === 'new' ? new Date(b.created_at) - new Date(a.created_at) : d(a) - d(b)));
@@ -220,17 +281,20 @@ function fitMarkers() {
   if (pts.length > 1) S.map.fitBounds(pts, { padding: [40, 40], maxZoom: 14 }); else if (pts.length === 1) S.map.setView(pts[0], 13);
 }
 function renderBoard() {
-  if (!S.fuel) return;
   const v = visible();
+  const lit = v.reduce((a, l) => a + (l.avail_l || 0), 0), min = v.length ? Math.min(...v.map((l) => l.price)) : 0;
+  $('#mapSum').innerHTML = v.length ? `<b>${v.length}</b> нийлүүлэгч харагдаж байна${S.fuel ? ' · ' + fl(S.fuel).l : ''} · нийт <b>${fmt(lit)} л</b> нөөц · хамгийн хямд <b>${money(min)}</b>/л` : (S.fuel ? `${fl(S.fuel).l} шатахуунтай идэвхтэй нийлүүлэгч одоогоор алга.` : 'Одоогоор идэвхтэй нийлүүлэгч алга. Удахгүй нэмэгдэнэ.');
+  $('#mapEmpty').hidden = !!v.length;
   if (S.layer) {
     S.layer.clearLayers();
     v.filter((l) => l.lat != null).forEach((l, i) => {
-      const mk = L.marker([l.lat, l.lng], { icon: L.divIcon({ className: '', html: `<div class="mk${S.sel === l.id ? ' on' : ''}" style="--c:${fl(l.fuel).c};--i:${Math.min(i, 10)}"><b>${fmt(l.price)}₮</b><i></i></div>`, iconSize: [0, 0] }), zIndexOffset: S.sel === l.id ? 900 : 0 });
+      const mk = L.marker([l.lat, l.lng], { icon: L.divIcon({ className: '', html: `<div class="pin${S.sel === l.id ? ' on' : ''}" style="--c:${fl(l.fuel).c};--i:${Math.min(i, 12)}"><span class="pp">${fmt(l.price)}₮</span><span class="dr"><b>${SHORT[l.fuel] || ''}</b></span></div>`, iconSize: [0, 0] }), zIndexOffset: S.sel === l.id ? 900 : 0, title: `${l.supplier_name} · ${fl(l.fuel).l} · ${fmt(l.price)}₮` });
       mk.on('click', () => { S.sel = l.id; renderBoard(); const c = $(`.card[data-id="${l.id}"]`); if (c) c.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'nearest' }); });
       S.layer.addLayer(mk);
     });
+    if (S.fitOnce && v.some((l) => l.lat != null)) { S.fitOnce = false; setTimeout(fitMarkers, 50); }
   }
-  if (!v.length) { $('#list').innerHTML = `<div class="empty">${fl(S.fuel).l} шатахуунтай идэвхтэй зар одоогоор алга. Өөр төрөл сонгох эсвэл түр хүлээнэ үү.</div>`; return; }
+  if (!v.length) { $('#list').innerHTML = `<div class="empty">${S.fuel ? fl(S.fuel).l + ' шатахуунтай идэвхтэй зар одоогоор алга. Өөр төрөл сонгох эсвэл түр хүлээнэ үү.' : 'Идэвхтэй зар одоогоор алга. Нийлүүлэгчид зараа нийтлэхэд энд гарч ирнэ.'}</div>`; return; }
   $('#list').innerHTML = v.map((l, i) => {
     const k = km(S.you, l), eta = etaMin(k), pct = Math.round((l.avail_l / Math.max(1, l.total_l)) * 100);
     const base = [l.base_district && l.base_district + ' дүүрэг', l.base_khoroo, l.base_org].filter(Boolean).join(', ') || '—';
@@ -419,21 +483,28 @@ async function renderMyOrders() {
 const SUP = { orders: [], listings: [], watch: null, lastSent: 0, lastPos: null, sound: store.get('shag_sound') === true, seen: new Set(), ch: null, edit: null };
 let audioCtx = null;
 function beep() { if (!SUP.sound) return; try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); [0, 0.25, 0.5].forEach((t) => { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.frequency.value = 880; o.connect(g); g.connect(audioCtx.destination); g.gain.setValueAtTime(0.25, audioCtx.currentTime + t); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + t + 0.2); o.start(audioCtx.currentTime + t); o.stop(audioCtx.currentTime + t + 0.21); }); } catch { /* */ } }
-function gate(root, msg, withLogin) { root.innerHTML = `<div class="gate"><p class="muted">${msg}</p>${withLogin ? '<button class="btn btn-primary" type="button" id="gl">Нэвтрэх</button>' : ''}</div>`; const g = $('#gl', root); if (g) g.onclick = () => openAuth(route); }
+function gate(root, msg, withLogin, intent) { root.innerHTML = `<div class="gate"><p class="muted">${msg}</p>${withLogin ? '<button class="btn btn-primary" type="button" id="gl">Нэвтрэх</button>' : ''}</div>`; const g = $('#gl', root); if (g) g.onclick = () => openAuth(route, null, intent || 'customer'); }
 async function renderSupplier() {
   const root = $('#supRoot');
-  if (!S.session) return gate(root, 'Нийлүүлэгчийн самбарт нэвтэрнэ үү.', true);
-  if (!S.profile || !['supplier', 'admin'].includes(S.profile.role)) return gate(root, 'Нийлүүлэгчийн эрхийг админ олгоно. Админтай холбогдоно уу.');
+  if (!S.session) return gate(root, 'Нийлүүлэгчээр нэвтэрч эсвэл бүртгүүлнэ үү. Анх удаа бол бүртгүүлсний дараа нийлүүлэгч болох хүсэлтээ илгээнэ.', true, 'supplier');
+  if (!S.profile || !['supplier', 'admin'].includes(S.profile.role)) return renderSupplierApply(root);
   const pr = S.profile, isAdm = pr.role === 'admin';
+  let pay = null; try { pay = (await sb.from('supplier_payout').select('*').eq('user_id', S.session.user.id).maybeSingle()).data || null; } catch { /* */ }
+  const needPay = !isAdm && !pay;
   root.innerHTML = `
     <div class="panel-head"><div><div class="eyebrow">${isAdm ? 'Админ · миний зар, хүргэлт' : 'Нийлүүлэгчийн самбар'}</div><h1>${esc(pr.display_name || 'Нийлүүлэгч')}</h1></div>
       <div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn btn-ghost btn-sm" type="button" id="sndBtn"></button><button class="btn btn-ghost btn-sm" type="button" id="geoBtn"></button></div></div>
     <p class="muted small" id="geoTxt" style="margin:6px 0 0"></p>
-    <form class="${pr.phone ? 'note' : 'note warn'}" id="pf" novalidate style="margin-top:14px;display:grid;gap:10px">
-      ${pr.phone ? `<div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between"><span>Захиалагч төлбөр төлсний дараа харагдах: <b>${esc(pr.display_name || '—')}</b> · <b class="mono">${phoneFmt(pr.phone)}</b></span><button class="btn btn-ghost btn-sm" type="button" id="pfEdit">Засах</button></div>` : '<b>Зар нийтлэхийн өмнө захиалагчид харагдах нэр, утасны дугаараа оруулна уу.</b>'}
-      <div class="grid2" id="pfBox"${pr.phone ? ' hidden' : ''}>
+    <form class="${pr.phone && !needPay ? 'note' : 'note warn'}" id="pf" novalidate style="margin-top:14px;display:grid;gap:10px">
+      ${pr.phone ? `<div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between"><span>Захиалагч төлбөр төлсний дараа харагдах: <b>${esc(pr.display_name || '—')}</b> · <b class="mono">${phoneFmt(pr.phone)}</b><br>Мөнгө хүлээн авах данс: ${pay ? `<b>${esc(pay.bank)}</b> · <b class="mono">${esc(pay.account)}</b> · ${esc(pay.holder)}` : (isAdm ? '<span class="muted">бүртгээгүй (админд заавал биш)</span>' : '<b>бүртгээгүй байна</b>')}</span><button class="btn btn-ghost btn-sm" type="button" id="pfEdit">Засах</button></div>` : '<b>Зар нийтлэхийн өмнө захиалагчид харагдах нэр, утасны дугаар, мөнгө хүлээн авах дансаа оруулна уу.</b>'}
+      <div class="grid2" id="pfBox"${pr.phone && !needPay ? ' hidden' : ''}>
         <label class="inp">Захиалагчид харагдах нэр<input id="pfName" maxlength="60" value="${esc(pr.display_name || '')}" placeholder="жишээ нь Шаг хүргэлт"></label>
         <label class="inp">Утасны дугаар<input id="pfPhone" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" value="${esc(pr.phone || '')}" placeholder="99xxxxxx"></label>
+        <b class="full" style="margin-top:4px">Мөнгө хүлээн авах данс${isAdm ? ' (заавал биш)' : ''}</b>
+        <label class="inp">Банк<select id="pfBank"><option value="">Сонгох</option>${BANKS.map((b) => `<option${pay && pay.bank === b ? ' selected' : ''}>${b}</option>`).join('')}</select></label>
+        <label class="inp">Дансны дугаар<input id="pfAcc" inputmode="numeric" maxlength="24" autocomplete="off" value="${esc(pay ? pay.account : '')}" placeholder="MN… IBAN эсвэл дансны дугаар"></label>
+        <label class="inp full">Данс эзэмшигчийн нэр<input id="pfHolder" maxlength="80" value="${esc(pay ? pay.holder : '')}" placeholder="Банкинд бүртгэлтэй нэр"></label>
+        <p class="muted small full" style="margin:0">Дансны мэдээлэл зөвхөн танд болон Шагийн админд харагдана. Борлуулалтын мөнгийг энэ дансанд шилжүүлнэ.</p>
         <div class="full"><button class="btn btn-primary btn-sm" type="submit" id="pfGo">Хадгалах</button></div>
       </div>
     </form>
@@ -442,14 +513,17 @@ async function renderSupplier() {
       <div class="box"><div class="box-h"><h3>Ирсэн захиалгууд</h3><span class="muted small">Төлбөр орсон захиалга л харагдана</span></div><div class="olist" id="supO"></div></div>
       <div class="box"><div class="box-h"><h3>Миний зарууд</h3><span class="muted small" id="supLc"></span></div><div id="supL"></div>
         <form class="box-b grid2" id="lf" novalidate style="border-top:1px solid var(--line)"></form></div>
-    </div><div style="height:70px"></div>`;
+    </div>
+    ${isAdm ? '' : `<div style="margin-top:16px">${chatBox()}</div>`}<div style="height:70px"></div>`;
   const pe = $('#pfEdit'); if (pe) pe.onclick = () => { $('#pfBox').hidden = !$('#pfBox').hidden; };
   $('#pf').onsubmit = async (e) => {
     e.preventDefault(); const b = $('#pfGo'), ph = $('#pfPhone').value.replace(/\D/g, ''), nm = $('#pfName').value.trim();
     if (nm.length < 2) { $('#pfName').focus(); return toast('Нэрээ бичнэ үү', true); }
     if (!/^[5-9]\d{7}$/.test(ph)) { $('#pfPhone').focus(); return toast('Утасны дугаар 8 оронтой', true); }
+    const bank = $('#pfBank').value, acc = $('#pfAcc').value.trim(), hold = $('#pfHolder').value.trim(), anyPay = bank || acc || hold;
+    if ((!isAdm || anyPay) && (!bank || !acc || hold.length < 2)) { (!bank ? $('#pfBank') : !acc ? $('#pfAcc') : $('#pfHolder')).focus(); return toast('Банк, дансны дугаар, эзэмшигчийн нэрээ бүрэн оруулна уу', true); }
     busy(b, true);
-    try { await rpc('update_my_profile', { p_name: nm, p_phone: ph }); await loadProfile(); renderHeader(); toast('Хадгалагдлаа'); renderSupplier(); }
+    try { await rpc('update_my_profile', { p_name: nm, p_phone: ph }); if (anyPay) await rpc('save_payout', { p_bank: bank, p_account: acc, p_holder: hold }); await loadProfile(); renderHeader(); toast('Хадгалагдлаа'); renderSupplier(); }
     catch (err) { toast(nice(err), true); busy(b, false); }
   };
   $('#sndBtn').onclick = () => { SUP.sound = !SUP.sound; store.set('shag_sound', SUP.sound); if (SUP.sound) beep(); drawTools(); };
@@ -457,8 +531,93 @@ async function renderSupplier() {
   drawTools();
   if (store.get('shag_geo') === true && SUP.watch == null) startWatch();
   await loadSupplier();
+  if (!isAdm) mountChat();
   if (!SUP.ch) SUP.ch = sb.channel('sup-orders').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => { if (S.view === 'niiluulegch') loadSupplier(); }).subscribe();
 }
+async function renderSupplierApply(root) {
+  const p = S.profile || {};
+  let pay = null; try { pay = (await sb.from('supplier_payout').select('*').eq('user_id', S.session.user.id).maybeSingle()).data || null; } catch { /* */ }
+  if (p.supplier_request === 'pending') {
+    root.innerHTML = `
+      <div class="panel-head"><div><div class="eyebrow">Нийлүүлэгч болох хүсэлт</div><h1>Хүсэлт хянагдаж байна</h1></div></div>
+      <div class="note warn" style="margin-top:14px">Таны хүсэлтийг Шагийн админ шалгаж байна. Батлагдмагц энэ хуудас нийлүүлэгчийн самбар болж, зар нийтлэх боломжтой болно. Асуух зүйл байвал доорх чатаар бичээрэй.</div>
+      <div class="box" style="margin:16px 0"><div class="box-h"><h3>Илгээсэн мэдээлэл</h3></div><div class="box-b"><dl class="meta">
+        <dt>Нийлүүлэгчийн нэр</dt><dd>${esc(p.display_name || '—')}</dd><dt>Утасны дугаар</dt><dd class="mono">${phoneFmt(p.phone)}</dd>
+        ${p.request_org ? `<dt>Байгууллага</dt><dd>${esc(p.request_org)}</dd>` : ''}${p.request_note ? `<dt>Нэмэлт</dt><dd>${esc(p.request_note)}</dd>` : ''}
+        <dt>Данс</dt><dd>${pay ? `${esc(pay.bank)} · <span class="mono">${esc(pay.account)}</span> · ${esc(pay.holder)}` : '—'}</dd>
+        <dt>Илгээсэн</dt><dd class="mono">${fmtDT(p.request_at)}</dd></dl></div></div>
+      ${chatBox()}<div style="height:70px"></div>`;
+    mountChat();
+    return;
+  }
+  const rej = p.supplier_request === 'rejected';
+  root.innerHTML = `
+    <div class="panel-head"><div><div class="eyebrow">Нийлүүлэгчээр бүртгүүлэх</div><h1>Нийлүүлэгч болох хүсэлт</h1></div></div>
+    ${rej ? '<div class="note err" style="margin-top:14px">Өмнөх хүсэлтээс татгалзсан байна. Мэдээллээ засаад дахин илгээх эсвэл доорх чатаар админтай холбогдоно уу.</div>' : '<p class="lead">Мэдээллээ бөглөж илгээхэд Шагийн админ шалгаад нийлүүлэгчийн эрх нээнэ. Борлуулалтын мөнгийг доорх дансанд шилжүүлнэ.</p>'}
+    <form class="box box-b grid2" id="sa" novalidate style="margin-top:16px">
+      <label class="inp">Нийлүүлэгчийн нэр (захиалагчид харагдана)<input id="saName" maxlength="60" value="${esc(p.display_name || '')}" placeholder="жишээ нь Туул Ойл"></label>
+      <label class="inp">Утасны дугаар<input id="saPhone" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" value="${esc(p.phone || '')}" placeholder="99xxxxxx"></label>
+      <label class="inp full">Байгууллагын нэр (байвал)<input id="saOrg" maxlength="120" value="${esc(p.request_org || '')}"></label>
+      <label class="inp full">Нэмэлт мэдээлэл<textarea id="saNote" maxlength="500" placeholder="Шатахууны төрөл, машины багтаамж, ажиллах дүүрэг гэх мэт">${esc(p.request_note || '')}</textarea></label>
+      <b class="full" style="margin-top:6px">Мөнгө хүлээн авах данс</b>
+      <label class="inp">Банк<select id="saBank"><option value="">Сонгох</option>${BANKS.map((b) => `<option${pay && pay.bank === b ? ' selected' : ''}>${b}</option>`).join('')}</select></label>
+      <label class="inp">Дансны дугаар<input id="saAcc" inputmode="numeric" maxlength="24" autocomplete="off" value="${esc(pay ? pay.account : '')}" placeholder="MN… IBAN эсвэл дансны дугаар"></label>
+      <label class="inp full">Данс эзэмшигчийн нэр<input id="saHolder" maxlength="80" value="${esc(pay ? pay.holder : '')}" placeholder="Банкинд бүртгэлтэй нэр"></label>
+      <p class="muted small full" style="margin:0">Дансны мэдээлэл зөвхөн танд болон Шагийн админд харагдана.</p>
+      <div class="full"><button class="btn btn-primary" type="submit" id="saGo">Хүсэлт илгээх</button></div>
+    </form>
+    ${rej ? `<div style="margin-top:16px">${chatBox()}</div>` : ''}<div style="height:70px"></div>`;
+  if (rej) mountChat();
+  $('#sa').onsubmit = async (e) => {
+    e.preventDefault(); const b = $('#saGo');
+    const nm = $('#saName').value.trim(), ph = $('#saPhone').value.replace(/\D/g, ''), bank = $('#saBank').value, acc = $('#saAcc').value.trim(), hold = $('#saHolder').value.trim();
+    if (nm.length < 2) { $('#saName').focus(); return toast('Нийлүүлэгчийн нэрээ бичнэ үү', true); }
+    if (!/^[5-9]\d{7}$/.test(ph)) { $('#saPhone').focus(); return toast('Утасны дугаар 8 оронтой', true); }
+    if (!bank) { $('#saBank').focus(); return toast('Банкаа сонгоно уу', true); }
+    if (!acc) { $('#saAcc').focus(); return toast('Дансны дугаараа оруулна уу', true); }
+    if (hold.length < 2) { $('#saHolder').focus(); return toast('Данс эзэмшигчийн нэрийг бичнэ үү', true); }
+    busy(b, true);
+    try { await rpc('request_supplier', { p_name: nm, p_phone: ph, p_org: $('#saOrg').value, p_note: $('#saNote').value, p_bank: bank, p_account: acc, p_holder: hold }); await loadProfile(); renderHeader(); toast('Хүсэлт илгээгдлээ. Админ шалгаад мэдэгдэнэ.'); renderSupplier(); }
+    catch (err) { toast(nice(err), true); busy(b, false); }
+  };
+}
+
+/* ================= Чат: нийлүүлэгч ↔ Шаг админ ================= */
+const CH = { ch: null, uid: null };
+function chatBox() {
+  return `<div class="box chat"><div class="box-h"><h3>Админтай чатлах</h3><span class="muted small">Шагийн админ энд хариулна</span></div>
+    <div class="msgs" id="cMsgs" aria-live="polite"><div class="muted small chat-empty">Ачаалж байна…</div></div>
+    <form class="chat-in" id="cForm" novalidate><textarea id="cTxt" rows="2" maxlength="2000" placeholder="Мессежээ бичнэ үү" aria-label="Мессеж"></textarea><button class="btn btn-primary btn-sm" type="submit" id="cGo">Илгээх</button></form></div>`;
+}
+const msgHtml = (adminView, name) => (m) => {
+  const mine = adminView ? m.from_admin : !m.from_admin;
+  const who = m.from_admin ? (adminView ? 'Шаг админ (та)' : 'Шаг админ') : (adminView ? esc(name || 'Хэрэглэгч') : 'Та');
+  return `<div class="msg${mine ? ' me' : ''}" data-m="${m.id}"><small>${who} · ${fmtDT(m.created_at)}</small><p>${esc(m.body)}</p></div>`;
+};
+function appendMsg(box, html, id) { if (!box || box.querySelector(`[data-m="${id}"]`)) return; const e = box.querySelector('.chat-empty'); if (e) e.remove(); box.insertAdjacentHTML('beforeend', html); box.scrollTop = box.scrollHeight; }
+function enterSends(ta, form) { ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && matchMedia('(hover:hover)').matches) { e.preventDefault(); form.requestSubmit(); } }); }
+async function mountChat() {
+  const uid = S.session.user.id, box = $('#cMsgs'); if (!box) return;
+  const { data } = await sb.from('support_messages').select('id,from_admin,body,created_at').eq('user_id', uid).order('created_at', { ascending: true }).limit(300);
+  box.innerHTML = (data || []).length ? data.map(msgHtml(false)).join('') : '<div class="muted small chat-empty">Асуух зүйлээ бичээрэй. Шагийн админ энд хариулна.</div>';
+  box.scrollTop = box.scrollHeight;
+  rpc('support_mark_read', { p_user: null }).catch(() => {});
+  if (CH.ch && CH.uid !== uid) { sb.removeChannel(CH.ch); CH.ch = null; }
+  if (!CH.ch) {
+    CH.uid = uid;
+    CH.ch = sb.channel('chat-' + uid).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_messages', filter: 'user_id=eq.' + uid }, (pl) => {
+      appendMsg($('#cMsgs'), msgHtml(false)(pl.new), pl.new.id);
+      if (pl.new.from_admin) { if (S.view === 'niiluulegch') rpc('support_mark_read', { p_user: null }).catch(() => {}); else toast('Шагийн админ чатад хариулав'); }
+    }).subscribe();
+  }
+  const f = $('#cForm'), ta = $('#cTxt'); enterSends(ta, f);
+  f.onsubmit = async (e) => {
+    e.preventDefault(); const t = ta.value.trim(); if (!t) return ta.focus(); const b = $('#cGo'); busy(b, true);
+    try { const id = await rpc('support_send', { p_body: t, p_user: null }); ta.value = ''; appendMsg($('#cMsgs'), msgHtml(false)({ id, from_admin: false, body: t, created_at: new Date().toISOString() }), id); }
+    catch (err) { toast(nice(err), true); } finally { busy(b, false); }
+  };
+}
+
 function drawTools() {
   const s = $('#sndBtn'), g = $('#geoBtn'); if (!s) return;
   s.textContent = SUP.sound ? '🔔 Дуут дохио: асаалттай' : '🔕 Дуут дохио асаах';
@@ -581,8 +740,15 @@ async function renderAdmin() {
     <div class="box" style="margin:16px 0 70px"><div class="tabbar" role="tablist" id="admTabs"></div><div id="admBody"></div></div>`;
   $('#admDays').value = String(ADM.days);
   $('#admDays').onchange = (e) => { ADM.days = +e.target.value; loadDash(); };
-  await Promise.all([loadDash(), loadFeed()]);
+  await Promise.all([loadDash(), loadFeed(), loadCounts()]);
   drawTabs();
+  if (!ADM.cch) ADM.cch = sb.channel('adm-chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_messages' }, async (pl) => {
+    if (S.view !== 'admin') return;
+    const m = pl.new;
+    if (ADM.tab === 'chat' && ADM.thread === m.user_id) { appendMsg($('#aMsgs'), msgHtml(true, ADM.threadName)(m), m.id); if (!m.from_admin) rpc('support_mark_read', { p_user: m.user_id }).catch(() => {}); }
+    else if (!m.from_admin) toast('Шинэ чат мессеж ирлээ');
+    await loadCounts(); if (ADM.tab === 'chat') drawThreads(); else refreshTabBadges();
+  }).subscribe();
   if (!ADM.ch) ADM.ch = sb.channel('adm').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_log' }, (pl) => { if (S.view !== 'admin') return; prependFeed(pl.new); clearTimeout(ADM.t); ADM.t = setTimeout(() => { loadDash(); if (['orders', 'feedback', 'listings'].includes(ADM.tab)) drawTabs(); }, 800); }).subscribe();
 }
 async function loadDash() {
@@ -619,11 +785,32 @@ function drawChart(days) {
 async function loadFeed() { const { data } = await sb.from('audit_log').select('*').order('at', { ascending: false }).limit(80); $('#feed').innerHTML = (data || []).map(feedLi).join('') || '<li><span class="muted">Бүртгэл алга</span></li>'; }
 const feedLi = (f) => `<li><time>${fmtDT(f.at)}</time><div><b>${esc(f.actor || 'Систем')}</b> <span>${esc(f.action)}${f.entity === 'order' && f.entity_id ? ' · #' + esc(f.entity_id) : ''}</span></div></li>`;
 function prependFeed(f) { const u = $('#feed'); if (u) u.insertAdjacentHTML('afterbegin', feedLi(f)); }
-const TABS = [['orders', 'Захиалга'], ['listings', 'Зарууд'], ['suppliers', 'Нийлүүлэгчид'], ['customers', 'Хэрэглэгчид'], ['feedback', 'Санал, гомдол'], ['settings', 'Тохиргоо']];
+const TABS = [['orders', 'Захиалга'], ['listings', 'Зарууд'], ['suppliers', 'Нийлүүлэгчид'], ['customers', 'Хэрэглэгчид'], ['chat', 'Чат'], ['feedback', 'Санал, гомдол'], ['settings', 'Тохиргоо']];
+async function loadCounts() { try { const [th, rq] = await Promise.all([rpc('admin_support_threads'), rpc('admin_supplier_requests')]); ADM.threads = th || []; ADM.reqs = rq || []; } catch { /* */ } }
+const unreadTotal = () => (ADM.threads || []).reduce((a, t) => a + Number(t.unread || 0), 0);
 function tbl(h, rows) { return `<div class="tbl-wrap"><table class="tbl"><thead><tr>${h.map((x) => `<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.join('') || `<tr><td colspan="${h.length}" class="muted">Мэдээлэл алга</td></tr>`}</tbody></table></div>`; }
+function refreshTabBadges() { const d = ADM.dash || {}; $$('#admTabs [data-tab]').forEach((b) => { const k = b.dataset.tab, n = k === 'orders' ? d.new_orders : k === 'feedback' ? d.open_feedback : k === 'chat' ? unreadTotal() : k === 'suppliers' ? (ADM.reqs || []).length : 0; const sp = b.querySelector('span'); if (n) { if (sp) sp.textContent = n; else b.insertAdjacentHTML('beforeend', `<span>${n}</span>`); } else if (sp) sp.remove(); }); }
+function drawThreads() {
+  const ul = $('#thList'); if (!ul) return;
+  let th = (ADM.threads || []).slice();
+  if (ADM.thread && !th.some((t) => t.user_id === ADM.thread)) th.unshift({ user_id: ADM.thread, name: ADM.threadName || 'Хэрэглэгч', role: '', last_body: 'Шинэ яриа', last_at: null, unread: 0 });
+  const rl = (t) => (t.role === 'supplier' ? 'Нийлүүлэгч' : t.supplier_request === 'pending' ? 'Хүсэлт илгээсэн' : t.role === 'admin' ? 'Админ' : 'Хэрэглэгч');
+  ul.innerHTML = th.length ? th.map((t) => `<li><button type="button" data-th="${t.user_id}" data-nm="${esc(t.name)}" aria-current="${ADM.thread === t.user_id}"><b>${esc(t.name)}</b><small>${rl(t)}${t.last_at ? ' · ' + fmtDT(t.last_at) : ''}</small><span>${esc(String(t.last_body || '').slice(0, 70))}</span>${Number(t.unread) ? `<i>${t.unread}</i>` : ''}</button></li>`).join('') : '<li class="muted small" style="padding:14px">Чат алга</li>';
+  $$('#thList [data-th]').forEach((b) => (b.onclick = () => openThread(b.dataset.th, b.dataset.nm)));
+  refreshTabBadges();
+}
+async function openThread(uid, name) {
+  ADM.thread = uid; ADM.threadName = name; drawThreads();
+  $('#thName').textContent = name || 'Хэрэглэгч'; $('#aForm').hidden = false;
+  const box = $('#aMsgs'); box.innerHTML = '<div class="muted small chat-empty">Ачаалж байна…</div>';
+  const { data } = await sb.from('support_messages').select('id,from_admin,body,created_at').eq('user_id', uid).order('created_at', { ascending: true }).limit(300);
+  box.innerHTML = (data || []).length ? data.map(msgHtml(true, name)).join('') : '<div class="muted small chat-empty">Мессеж алга. Эхний мессежээ бичнэ үү.</div>';
+  box.scrollTop = box.scrollHeight;
+  try { await rpc('support_mark_read', { p_user: uid }); await loadCounts(); drawThreads(); } catch { /* */ }
+}
 async function drawTabs() {
   const d = ADM.dash || {};
-  $('#admTabs').innerHTML = TABS.map(([k, v]) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${ADM.tab === k}">${v}${k === 'orders' && d.new_orders ? `<span>${d.new_orders}</span>` : ''}${k === 'feedback' && d.open_feedback ? `<span>${d.open_feedback}</span>` : ''}</button>`).join('');
+  $('#admTabs').innerHTML = TABS.map(([k, v]) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${ADM.tab === k}">${v}${k === 'orders' && d.new_orders ? `<span>${d.new_orders}</span>` : ''}${k === 'feedback' && d.open_feedback ? `<span>${d.open_feedback}</span>` : ''}${k === 'chat' && unreadTotal() ? `<span>${unreadTotal()}</span>` : ''}${k === 'suppliers' && (ADM.reqs || []).length ? `<span>${ADM.reqs.length}</span>` : ''}</button>`).join('');
   $$('#admTabs [data-tab]').forEach((b) => (b.onclick = () => { ADM.tab = b.dataset.tab; drawTabs(); }));
   const B = $('#admBody'); B.innerHTML = '<div class="box-b"><span class="spin"></span></div>';
   try {
@@ -666,9 +853,27 @@ async function drawTabs() {
         catch (err) { toast(nice(err), true); busy(b, false); }
       };
     }
+    if (ADM.tab === 'chat') {
+      await loadCounts();
+      if (!ADM.thread && (ADM.threads || []).length) { ADM.thread = ADM.threads[0].user_id; ADM.threadName = ADM.threads[0].name; }
+      B.innerHTML = `<div class="chatwrap"><ul class="threads" id="thList"></ul><div class="chat chatpane"><div class="box-h"><h3 id="thName">${ADM.thread ? esc(ADM.threadName || '') : 'Яриа сонгоно уу'}</h3><span class="muted small">Таны нэр, утасны дугаар харагдахгүй. «Шаг админ» гэж очно.</span></div>
+        <div class="msgs" id="aMsgs"><div class="muted small chat-empty">${(ADM.threads || []).length ? 'Зүүн талаас яриа сонгоно уу.' : 'Одоогоор чат алга. Нийлүүлэгч бичихэд энд гарна.'}</div></div>
+        <form class="chat-in" id="aForm" novalidate${ADM.thread ? '' : ' hidden'}><textarea id="aTxt" rows="2" maxlength="2000" placeholder="Хариу бичих" aria-label="Хариу"></textarea><button class="btn btn-primary btn-sm" type="submit" id="aGo">Илгээх</button></form></div></div>`;
+      drawThreads();
+      const af = $('#aForm'), at = $('#aTxt'); enterSends(at, af);
+      af.onsubmit = async (e) => {
+        e.preventDefault(); const t = at.value.trim(); if (!t || !ADM.thread) return; const b = $('#aGo'); busy(b, true);
+        try { const id = await rpc('support_send', { p_body: t, p_user: ADM.thread }); at.value = ''; appendMsg($('#aMsgs'), msgHtml(true, ADM.threadName)({ id, from_admin: true, body: t, created_at: new Date().toISOString() }), id); await loadCounts(); drawThreads(); }
+        catch (err) { toast(nice(err), true); } finally { busy(b, false); }
+      };
+      if (ADM.thread) openThread(ADM.thread, ADM.threadName);
+    }
     if (ADM.tab === 'suppliers' || ADM.tab === 'customers') {
       const role = ADM.tab === 'suppliers' ? 'supplier' : 'customer';
       const list = await rpc('admin_users', { p_role: role });
+      const reqs = role === 'supplier' ? ((await rpc('admin_supplier_requests')) || []) : [];
+      ADM.reqs = role === 'supplier' ? reqs : ADM.reqs;
+      const reqHtml = reqs.length ? `<div class="box-b" style="border-bottom:1px solid var(--line)"><b>Нийлүүлэгч болох хүсэлтүүд (${reqs.length})</b></div>` + tbl(['Нэр, утасны дугаар', 'Байгууллага, нэмэлт', 'Данс', 'Илгээсэн', 'Зарын хязгаар', ''], reqs.map((r) => `<tr><td><b>${esc(r.display_name || '—')}</b><div class="mono small muted">${phoneFmt(r.phone)}</div><div class="small muted">${esc(r.email || r.username || '')}</div></td><td class="small" style="min-width:200px">${esc(r.request_org || '—')}${r.request_note ? `<div class="muted">${esc(r.request_note)}</div>` : ''}</td><td class="small">${r.bank ? `${esc(r.bank)}<div class="mono">${esc(r.account)}</div><div class="muted">${esc(r.holder)}</div>` : '—'}</td><td class="n">${fmtDT(r.request_at)}</td><td><input class="isel" style="width:70px" type="number" min="0" max="100" value="5" data-rqmax="${r.id}" aria-label="Зарын хязгаар"></td><td class="act"><button class="btn btn-ok btn-sm" type="button" data-rq="${r.id}" data-ok="1">Батлах</button><button class="btn btn-ghost btn-sm" type="button" data-rq="${r.id}" data-ok="0">Татгалзах</button><button class="btn btn-ghost btn-sm" type="button" data-chat="${r.id}" data-nm="${esc(r.display_name || '')}">Чатлах</button></td></tr>`)) : '';
       const form = `<form class="box-b grid2" id="uf" novalidate style="border-bottom:1px solid var(--line)"><b class="full">${role === 'supplier' ? 'Шинэ нийлүүлэгч нэмэх' : 'Хэрэглэгч нэмэх'}</b>
         <label class="inp">${role === 'supplier' ? 'Нийлүүлэгчийн нэр (харагдах)' : 'Нэр'}<input id="uName" maxlength="60"></label>
         <label class="inp">Утасны дугаар<input id="uPhone" type="tel" inputmode="numeric" maxlength="8"></label>
@@ -676,15 +881,17 @@ async function drawTabs() {
         <label class="inp">Анхны ПИН код (6 оронтой)<input id="uPin" inputmode="numeric" maxlength="6"></label>
         ${role === 'supplier' ? '<label class="inp">Зарын дээд тоо<input id="uMax" type="number" min="0" max="100" value="5"></label>' : ''}
         <div class="full"><button class="btn btn-primary" type="submit" id="uGo">Нэмэх</button> <span class="muted small">Нэвтрэх нэр, ПИН кодыг тухайн хүнд өөрөө дамжуулна уу.</span></div></form>`;
-      B.innerHTML = form + tbl(role === 'supplier' ? ['Нийлүүлэгч', 'Утасны дугаар', 'Идэвхтэй зар', 'Зарын хязгаар', 'Нийт борлуулалт', 'Төлөв', ''] : ['Нэр', 'Утасны дугаар', 'Имэйл / нэр', 'Төлсөн захиалга', 'Бүртгүүлсэн', 'Төлөв', ''],
+      B.innerHTML = reqHtml + form + tbl(role === 'supplier' ? ['Нийлүүлэгч', 'Утасны дугаар', 'Данс', 'Идэвхтэй зар', 'Зарын хязгаар', 'Нийт борлуулалт', 'Төлөв', ''] : ['Нэр', 'Утасны дугаар', 'Имэйл / нэр', 'Төлсөн захиалга', 'Бүртгүүлсэн', 'Төлөв', ''],
         list.map((u) => {
           const nm = esc(u.display_name || u.username || u.email || '—'), stp = u.blocked ? '<span class="pill p-blocked">Хаагдсан</span>' : '<span class="pill p-active">Идэвхтэй</span>';
           const blk = u.id === S.session.user.id ? '' : `<button class="btn btn-ghost btn-sm" type="button" data-blk="${u.id}" data-v="${!u.blocked}">${u.blocked ? 'Нээх' : 'Хаах'}</button>`;
           const pin = (u.email == null && u.username) ? `<button class="btn btn-ghost btn-sm" type="button" data-pin="${u.id}">ПИН сэргээх</button>` : '';
-          if (role === 'supplier') return `<tr><td><b>${nm}</b><div class="muted small">${esc(u.username || '')}</div></td><td class="n">${phoneFmt(u.phone)}</td><td class="n">${u.active_listings}</td><td><input class="isel" style="width:70px" type="number" min="0" max="100" value="${u.max_listings}" data-max="${u.id}" aria-label="Зарын хязгаар"></td><td class="n">${money(u.sales)}</td><td>${stp}</td><td class="act">${pin}${blk}</td></tr>`;
+          if (role === 'supplier') return `<tr><td><b>${nm}</b><div class="muted small">${esc(u.username || '')}</div></td><td class="n">${phoneFmt(u.phone)}</td><td class="small">${u.bank ? `${esc(u.bank)}<div class="mono">${esc(u.account)}</div><div class="muted">${esc(u.holder)}</div>` : '<span class="muted">бүртгээгүй</span>'}</td><td class="n">${u.active_listings}</td><td><input class="isel" style="width:70px" type="number" min="0" max="100" value="${u.max_listings}" data-max="${u.id}" aria-label="Зарын хязгаар"></td><td class="n">${money(u.sales)}</td><td>${stp}</td><td class="act"><button class="btn btn-ghost btn-sm" type="button" data-chat="${u.id}" data-nm="${nm}">Чатлах</button>${pin}${blk}</td></tr>`;
           return `<tr><td><b>${nm}</b></td><td class="n">${phoneFmt(u.phone)}</td><td class="small">${esc(u.email || u.username || '')}</td><td class="n">${u.orders_paid}</td><td class="n">${fmtDT(u.created_at)}</td><td>${stp}</td><td class="act"><button class="btn btn-ghost btn-sm" type="button" data-role="${u.id}" data-r="supplier">Нийлүүлэгч болгох</button>${pin}${blk}</td></tr>`;
         }));
       const uf = $('#uf'); if (uf) uf.onsubmit = async (e) => { e.preventDefault(); const b = $('#uGo'); busy(b, true); try { await fn('admin-users', { action: 'create', role, name: $('#uName').value, phone: $('#uPhone').value, username: $('#uUser').value, pin: $('#uPin').value, max_listings: $('#uMax') ? +$('#uMax').value : 5 }); toast('Бүртгэл үүслээ'); drawTabs(); loadDash(); } catch (err) { toast(nice(err), true); busy(b, false); } };
+      $$('#admBody [data-rq]').forEach((b) => (b.onclick = async () => { const ok = b.dataset.ok === '1', mx = $(`#admBody [data-rqmax="${b.dataset.rq}"]`); busy(b, true); try { await rpc('admin_decide_supplier', { p_user: b.dataset.rq, p_approve: ok, p_max: mx ? +mx.value : 5 }); toast(ok ? 'Нийлүүлэгчийн эрх нээгдлээ' : 'Хүсэлтээс татгалзлаа'); await loadCounts(); drawTabs(); loadDash(); } catch (err) { toast(nice(err), true); busy(b, false); } }));
+      $$('#admBody [data-chat]').forEach((b) => (b.onclick = () => { ADM.thread = b.dataset.chat; ADM.threadName = b.dataset.nm; ADM.tab = 'chat'; drawTabs(); }));
       $$('#admBody [data-blk]').forEach((b) => (b.onclick = async () => { try { await rpc('admin_set_blocked', { p_user: b.dataset.blk, p_blocked: b.dataset.v === 'true' }); toast(b.dataset.v === 'true' ? 'Хаагдлаа' : 'Нээгдлээ'); drawTabs(); } catch (err) { toast(nice(err), true); } }));
       $$('#admBody [data-max]').forEach((i) => (i.onchange = async () => { try { await rpc('admin_set_role', { p_user: i.dataset.max, p_role: 'supplier', p_level: null, p_max: +i.value }); toast('Зарын хязгаар шинэчлэгдлээ'); } catch (err) { toast(nice(err), true); } }));
       $$('#admBody [data-role]').forEach((b) => (b.onclick = async () => { try { await rpc('admin_set_role', { p_user: b.dataset.role, p_role: b.dataset.r, p_level: null, p_max: null }); toast('Эрх шинэчлэгдлээ'); drawTabs(); loadDash(); } catch (err) { toast(nice(err), true); } }));
@@ -854,10 +1061,12 @@ sb.auth.onAuthStateChange((ev, session) => {
     await loadProfile(); renderHeader();
     if (!booted) { booted = true; route(); } else if (ev === 'SIGNED_IN' || ev === 'SIGNED_OUT' || ev === 'USER_UPDATED') { await loadListings(); route(); }
     if (ev === 'SIGNED_IN' && store.get('shag_after') === 'resume') { store.set('shag_after', null); location.hash = 'zahialah'; }
+    if (ev === 'SIGNED_IN' && store.get('shag_intent') === 'supplier') { store.set('shag_intent', null); if (location.hash !== '#niiluulegch') location.hash = 'niiluulegch'; else route(); }
     if (/[?&](code|error)=/.test(location.search)) history.replaceState(null, '', location.pathname + location.hash);
   }, 0);
 });
 loadSettings(); loadListings();
+(() => { const c = $('#cornerHelp'); if (!c || !INAPP) return; let hid = false; try { hid = sessionStorage.getItem('shag_ch') === '1'; } catch { /* */ } if (hid) return; c.hidden = false; $('#chOpen').onclick = () => browserGuide(); $('#chClose').onclick = () => { c.hidden = true; try { sessionStorage.setItem('shag_ch', '1'); } catch { /* */ } }; })();
 sb.channel('listings-pub').on('postgres_changes', { event: '*', schema: 'public', table: 'listings' }, () => { clearTimeout(S.lt); S.lt = setTimeout(loadListings, 1500); }).subscribe();
 /* Hero видео: iPhone-ийн Low Power Mode, зарим апп доторх хөтөч автоматаар тоглуулахыг хаадаг.
    Тэр үед тоглуулах товч гаргахгүй, зургийг удаан томруулж харуулаад, эхний хүрэлтээр видеог эхлүүлнэ. */

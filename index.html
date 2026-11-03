@@ -140,13 +140,46 @@ section.band{padding-block:64px}
 .fld select option{background:var(--night)}
 .fld label{color:var(--fog);font-weight:600;white-space:nowrap}
 .fld.search{flex:1 1 200px}.fld.search input{width:100%}
-.board-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:18px;align-items:start}
+.board-grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:18px;align-items:start}
+.board-side{min-width:0}
 .mapbox{position:sticky;top:calc(env(safe-area-inset-top,0px) + 80px);background:var(--night);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.map{height:520px;background:#0c141b}
+.map{height:clamp(440px,70vh,640px);background:#E8ECEF}
+.map.dark{background:#0c141b}
 .map-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;padding:10px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--fog)}
 .map-foot b{color:var(--frost)}
-.leaflet-container{font-family:var(--body);background:#0c141b}
-.leaflet-tile-pane{filter:invert(1) hue-rotate(185deg) brightness(.85) contrast(.92) saturate(.6)}
+.leaflet-container{font-family:var(--body);background:#E8ECEF}
+.leaflet-container.dark{background:#0c141b}
+.leaflet-tile-pane{filter:saturate(.8) brightness(1.02)}
+.dark .leaflet-tile-pane{filter:invert(1) hue-rotate(185deg) brightness(.85) contrast(.92) saturate(.6)}
+.mapbox{isolation:isolate}
+.map-chips{position:absolute;left:12px;right:12px;top:12px;z-index:500;display:flex;flex-wrap:wrap;gap:8px;pointer-events:none}
+.chipf{pointer-events:auto;display:inline-flex;align-items:center;gap:7px;border:1.5px solid rgba(10,15,20,.12);background:#fff;color:#14202A;border-radius:999px;padding:8px 14px;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 2px 8px rgba(10,15,20,.18);transition:transform .15s,background .15s,border-color .15s}
+.chipf:hover{transform:translateY(-1px)}
+.chipf:active{transform:scale(.97)}
+.chipf i{width:9px;height:9px;border-radius:50%;background:var(--c,#14202A)}
+.chipf small{font-family:var(--mono);font-weight:700;font-size:12px;color:#5B6B78}
+.chipf[aria-pressed="true"]{background:#14202A;color:#fff;border-color:#14202A}
+.chipf[aria-pressed="true"] small{color:#FFD08A}
+.mbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:44px;height:44px;border-radius:14px;border:1px solid rgba(10,15,20,.12);background:#fff;color:#14202A;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 2px 8px rgba(10,15,20,.2);padding:0 12px;transition:transform .15s}
+.mbtn:hover{transform:translateY(-1px)}.mbtn:active{transform:scale(.96)}
+.mbtn[aria-pressed="true"]{background:#14202A;color:#FFD08A}
+.map-wrap{position:relative}
+.mbtn.near{position:absolute;right:12px;bottom:30px;z-index:500;height:48px;border-radius:999px;padding:0 18px}
+.map-empty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:450;background:rgba(255,255,255,.95);color:#14202A;font-weight:800;padding:12px 18px;border-radius:12px;box-shadow:0 4px 16px rgba(10,15,20,.2);text-align:center;max-width:80%}
+.mapbox .leaflet-top.leaflet-left{top:auto;bottom:12px}
+.map-chips .mbtn{pointer-events:auto;margin-left:auto;height:40px;min-width:40px;border-radius:999px;padding:0}
+.mapbox .leaflet-bar a{width:40px!important;height:40px!important;line-height:40px!important;font-size:20px!important}
+.mapbox .leaflet-bar{border:0!important;box-shadow:0 2px 8px rgba(10,15,20,.2)!important;border-radius:12px!important;overflow:hidden}
+.mapbox .leaflet-bar a{background:#fff!important;color:#14202A!important;border-color:rgba(10,15,20,.1)!important}
+.pin{position:relative;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;cursor:pointer}
+.pin .pp{font-family:var(--mono);font-size:12px;font-weight:700;background:#fff;color:#0A0F14;border-radius:7px;padding:2px 6px;box-shadow:0 2px 6px rgba(0,0,0,.3);margin-bottom:4px;white-space:nowrap}
+.pin .dr{width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--c);border:3px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.35);display:grid;place-items:center;transition:transform .15s}
+.pin .dr b{transform:rotate(45deg);font-family:var(--display);font-weight:700;font-size:13px;color:#0A0F14;letter-spacing:.02em}
+.pin.on .pp{background:var(--sodium)}
+.pin.on .dr{border-color:#14202A;transform:rotate(-45deg) scale(1.15)}
+.map.pop .pin .pp{animation:pin .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0) * 50ms)}
+.map.pop .pin .dr{animation:pindr .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0) * 50ms)}
+@keyframes pindr{from{transform:rotate(-45deg) scale(.3);opacity:0}to{transform:rotate(-45deg) scale(1);opacity:1}}
 .leaflet-control-attribution{background:rgba(10,15,20,.75)!important;color:var(--fog)!important}
 .leaflet-control-attribution a{color:var(--frost)!important}
 .leaflet-bar a{background:var(--raise)!important;color:var(--frost)!important;border-color:var(--line)!important}
@@ -348,11 +381,46 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 .spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--sodium);animation:sp .8s linear infinite;display:inline-block}
 @keyframes sp{to{transform:rotate(360deg)}}
 
+.role-opt{display:grid;gap:4px;text-align:left;width:100%;cursor:pointer;background:var(--raise);border:1px solid var(--line-2);border-radius:14px;padding:16px 18px;transition:border-color .15s,background .15s,transform .15s}
+.role-opt:hover{border-color:var(--sodium);background:var(--raise-2);transform:translateY(-1px)}
+.role-opt:active{transform:scale(.99)}
+.role-opt b{font-size:17px;font-weight:800}
+.role-opt span{color:var(--fog);font-size:13.5px}
+.linkbtn{background:none;border:0;padding:0;color:#FFD08A;font-weight:700;font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-align:left}
+.ask{margin:0;font-weight:800;font-size:18px}
+.guide{margin:0;padding-left:20px;display:grid;gap:8px;color:#D3DCE2}
+.copyrow{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.copyrow .mono{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat{display:flex;flex-direction:column;min-width:0}
+.msgs{display:flex;flex-direction:column;gap:10px;padding:14px 16px;max-height:420px;min-height:200px;overflow-y:auto;overscroll-behavior:contain}
+.msg{max-width:min(78%,520px);align-self:flex-start;background:var(--raise);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:8px 12px}
+.msg.me{align-self:flex-end;background:var(--sodium-soft);border-color:rgba(255,176,46,.35);border-radius:14px 14px 4px 14px}
+.msg small{display:block;font-size:11.5px;color:var(--fog);margin-bottom:2px}
+.msg p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.chat-empty{padding:18px 4px;text-align:center}
+.chat-in{display:flex;gap:10px;align-items:flex-end;padding:12px 16px;border-top:1px solid var(--line)}
+.chat-in textarea{flex:1;min-width:0;resize:none;background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:15px;color:var(--frost);outline:none;max-height:140px}
+.chat-in textarea:focus{border-color:var(--sodium)}
+.chatwrap{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);min-height:460px}
+.threads{list-style:none;margin:0;padding:0;border-right:1px solid var(--line);max-height:560px;overflow-y:auto}
+.threads button{position:relative;display:grid;gap:2px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid rgba(36,52,66,.7);padding:12px 40px 12px 16px;cursor:pointer;color:var(--frost)}
+.threads button:hover{background:var(--raise)}
+.threads button[aria-current="true"]{background:var(--raise-2)}
+.threads b{font-size:14px}.threads small{font-size:12px;color:var(--fog)}
+.threads span{font-size:12.5px;color:var(--fog-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.threads i{position:absolute;right:14px;top:14px;font-style:normal;font-family:var(--mono);font-size:11px;font-weight:700;background:var(--sodium);color:var(--sodium-ink);border-radius:999px;padding:1px 7px}
+.chatpane .msgs{max-height:440px}
+.corner-help{position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:70;display:flex;align-items:center;gap:4px;background:#fff;color:#14202A;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.35);padding:4px 4px 4px 14px;max-width:calc(100% - 24px)}
+.corner-help button{border:0;background:none;color:inherit;cursor:pointer;font-weight:800;font-size:13px}
+.corner-help #chOpen{padding:8px 4px;text-align:left}
+.corner-help #chOpen b{color:#B86E00}
+.corner-help #chClose{width:32px;height:32px;border-radius:50%;font-size:18px;line-height:1;color:#5B6B78}
+@media (max-width:700px){.chatwrap{grid-template-columns:1fr}.threads{border-right:0;border-bottom:1px solid var(--line);max-height:220px}.msg{max-width:88%}}
 .js-rv .rv{opacity:0;transform:translateY(26px)}
 .js-rv .rv.in{opacity:1;transform:none;transition:opacity .75s cubic-bezier(.2,.7,.2,1),transform .75s cubic-bezier(.2,.7,.2,1);transition-delay:calc(var(--i,0) * 80ms)}
 .tag-man{display:block;font-family:var(--body);white-space:normal;font-size:12px;font-weight:700;color:#B9D5FF;margin-top:2px}
 footer.app .sign{display:none}
-@media (max-width:1080px){.board-grid,.cols{grid-template-columns:1fr}.mapbox{position:relative;top:auto}.map{height:380px}}
+@media (max-width:1080px){.board-grid,.cols{grid-template-columns:1fr}.mapbox{position:relative;top:auto}.map{height:clamp(420px,64vh,560px)}}
 @media (max-width:860px){
   .hero-in{padding-block:96px 36px}
   .hero-grid{grid-template-columns:1fr;gap:26px;margin-top:22px}
@@ -429,21 +497,24 @@ footer.app .sign{display:none}
   <section class="band" id="zahialah" aria-labelledby="ordTitle">
     <div class="wrap">
       <div class="sec-head rv"><div>
-        <div class="eyebrow">1 · Шатахууны төрөл</div>
-        <h2 id="ordTitle">Ямар шатахуун хэрэгтэй вэ?</h2>
-        <p class="lead">Төрлөө сонгоход тэр шатахуунтай нийлүүлэгчид газрын зураг дээр гарч ирнэ.</p>
+        <h2 id="ordTitle">Ойролцоох нийлүүлэгчид</h2>
+        <p class="lead" id="mapSum">Газрын зураг дээрээс шатахуунтай нийлүүлэгчээ сонгоно уу.</p>
       </div></div>
-      <div class="fuels rv" style="--i:1" id="fuels" role="group" aria-label="Шатахууны төрөл"></div>
-      <div id="boardWrap" hidden>
-        <div class="eyebrow" style="margin:26px 0 10px">2 · Нийлүүлэгч сонгох</div>
-        <div class="toolbar">
-          <button class="btn btn-ghost btn-sm" type="button" id="locBtn">◎ Миний байршил</button>
-          <div class="fld"><label for="sortSel">Эрэмбэ</label><select id="sortSel"><option value="dist">Ойроос нь</option><option value="price">Хямдаас нь</option><option value="new">Шинээр нь</option></select></div>
-          <div class="fld search"><input id="q" type="search" placeholder="Дүүрэг, хороо, байгууллага, нийлүүлэгч хайх" aria-label="Байршил эсвэл нийлүүлэгчээр хайх"></div>
+      <div class="board-grid">
+        <div class="mapbox rv" style="--i:1">
+          <div class="map-wrap">
+          <div class="map" id="map" role="application" aria-label="Нийлүүлэгчдийн газрын зураг"></div>
+          <div class="map-chips"><div id="chips" role="group" aria-label="Шатахууны төрлөөр шүүх" style="display:contents"></div><button class="mbtn" type="button" id="nightBtn" aria-label="Газрын зургийг шөнийн горимд шилжүүлэх" title="Шөнийн горим"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button></div>
+          <button class="mbtn near" type="button" id="locBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>Надад ойр</button>
+          <div class="map-empty" id="mapEmpty" hidden>Одоогоор идэвхтэй нийлүүлэгч алга</div>
+          </div>
+          <div class="map-foot"><span>Хүргүүлэх цэг: <b id="youLabel">газрын зураг дээр дарж заана уу</b></span><span>Зай, хугацаа ойролцоогоор</span></div>
         </div>
-        <div class="board-grid">
-          <div class="mapbox"><div class="map" id="map" role="application" aria-label="Нийлүүлэгчдийн газрын зураг"></div>
-            <div class="map-foot"><span>Хүргүүлэх цэг: <b id="youLabel">газрын зураг дээр дарж заана уу</b></span><span>Зай, хугацаа ойролцоогоор</span></div></div>
+        <div class="board-side">
+          <div class="toolbar">
+            <div class="fld"><label for="sortSel">Эрэмбэ</label><select id="sortSel"><option value="dist">Ойроос нь</option><option value="price">Хямдаас нь</option><option value="new">Шинээр нь</option></select></div>
+            <div class="fld search"><input id="q" type="search" placeholder="Дүүрэг, хороо, нийлүүлэгч хайх" aria-label="Байршил эсвэл нийлүүлэгчээр хайх"></div>
+          </div>
           <div class="list" id="list" aria-live="polite"></div>
         </div>
       </div>
@@ -501,7 +572,7 @@ footer.app .sign{display:none}
   </div>
   <div class="wrap legal">
     <span>© 2026 Шаг</span>
-    <nav><a href="#nuutslal">Нууцлалын бодлого</a><a href="#nokhtsol">Үйлчилгээний нөхцөл</a><a href="#butsaalt">Төлбөр, буцаалт</a></nav>
+    <nav><a href="#niiluulegch">Нийлүүлэгчээр бүртгүүлэх</a><a href="#nuutslal">Нууцлалын бодлого</a><a href="#nokhtsol">Үйлчилгээний нөхцөл</a><a href="#butsaalt">Төлбөр, буцаалт</a></nav>
   </div>
 </footer>
 
@@ -509,6 +580,7 @@ footer.app .sign{display:none}
   <div class="sheet"><div class="sheet-h"><b id="mTitle"></b><button class="x" type="button" id="mClose" aria-label="Хаах">×</button></div><div class="sheet-b" id="mBody"></div></div>
 </div>
 <div class="toast" id="toast" hidden role="status"></div>
+<div class="corner-help" id="cornerHelp" hidden><button type="button" id="chOpen">Нэвтрэхэд асуудалтай юу? <b>Хөтчөөр нээх заавар</b></button><button type="button" id="chClose" aria-label="Хаах">×</button></div>
 
 <script src="vendor/supabase.js"></script>
 <script src="vendor/leaflet/leaflet.js"></script>
@@ -520,6 +592,6 @@ d.classList.add('js-rv');var io=new IntersectionObserver(function(es){es.forEach
 document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});setTimeout(function(){document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in')})},6000);
 setTimeout(function(){var b=document.getElementById('pylonRows');if(b)b.classList.remove('boot')},3500)})();
 </script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>
